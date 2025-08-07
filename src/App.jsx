@@ -1,31 +1,60 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import Game1 from './pages/Game1';
+import ArrowGame from './components/ArrowGame/ArrowGame';
 
-// Main App component that handles the page state
-export default function App() {
+// Wrapper component to handle the game state and routing
+function GameWrapper() {
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [playerData, setPlayerData] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // This function will be called when the game starts from HomePage
   const handleStartGame = (nickname, avatar) => {
     setPlayerData({ nickname, avatar });
     setIsGameStarted(true);
+    navigate('/game1');
   };
 
   // This function will be called when returning to home from Game1
   const handleReturnHome = () => {
     setIsGameStarted(false);
+    navigate('/');
   };
 
-  // Conditionally render either the home page or the game page
+  // Handle direct navigation to /game1
+  useEffect(() => {
+    if (location.pathname === '/game1' && !isGameStarted) {
+      // Set default player data for testing
+      setPlayerData({ nickname: 'Test Player', avatar: { emoji: '👤', color: 'bg-blue-500' } });
+      setIsGameStarted(true);
+    }
+  }, [location.pathname, isGameStarted]);
+
   return (
     <div className="min-h-screen bg-gray-900 text-white font-sans p-4 sm:p-8 flex items-center justify-center">
-      {isGameStarted ? (
-        <Game1 player={playerData} onGoBack={handleReturnHome} />
-      ) : (
-        <HomePage onStartGame={handleStartGame} />
-      )}
+      <Routes>
+        <Route path="/" element={
+          <HomePage onStartGame={handleStartGame} />
+        } />
+        <Route path="/game1" element={
+          <Game1 player={playerData} onGoBack={handleReturnHome} />
+        } />
+        <Route path="/game2" element={
+          <ArrowGame onComplete={handleReturnHome} />
+        } />
+      </Routes>
     </div>
+  );
+}
+
+// Main App component that wraps everything with Router
+export default function App() {
+  return (
+    <Router>
+      <GameWrapper />
+    </Router>
   );
 }
