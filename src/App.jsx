@@ -13,11 +13,11 @@ export default function App() {
     setIsGameStarted(true);
   };
 
+
   // This function will be called when returning to home from Game1
   const handleReturnHome = () => {
     setIsGameStarted(false);
   };
-
   // Conditionally render either the home page or the game page
   return (
     <div className="min-h-screen bg-gray-900 text-white font-sans p-4 sm:p-8 flex items-center justify-center">

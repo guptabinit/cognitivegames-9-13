@@ -1,5 +1,4 @@
 import React from 'react';
-
 export default function Game1({ player, onGoBack }) {
   return (
     <div className="bg-gray-800 p-6 sm:p-10 rounded-3xl shadow-2xl w-full max-w-4xl">
