@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PlayCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function HomePage({ onStartGame }) {
-  const [nickname, setNickname] = useState('CoolNickname');
+  const [nickname, setNickname] = useState('Player');
   const [currentAvatar, setCurrentAvatar] = useState(0);
 
   const avatars = [
@@ -49,8 +49,9 @@ export default function HomePage({ onStartGame }) {
           placeholder="Enter your nickname"
         />
         <button
-          onClick={onStartGame}
+          onClick={() => onStartGame(nickname, avatars[currentAvatar])}
           className="flex items-center justify-center px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full text-xl font-bold shadow-xl transition-all duration-300 transform hover:scale-105 w-full max-w-xs"
+          disabled={!nickname.trim()}
         >
           <PlayCircle className="mr-2 h-6 w-6" /> START
         </button>
