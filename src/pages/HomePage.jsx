@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { PlayCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PlayCircle, ChevronLeft, ChevronRight, User, Users } from 'lucide-react';
+import Footer from '../components/Footer';
 
 export default function HomePage({ onStartGame }) {
   const [selectedTab, setSelectedTab] = useState('anonymous');
@@ -22,30 +23,7 @@ export default function HomePage({ onStartGame }) {
   };
 
   return (
-    <div className="bg-gray-800 p-6 sm:p-10 rounded-3xl shadow-2xl max-w-4xl w-full">
-      <Header />
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
-          <div className="flex justify-center mb-6">
-            <button
-              onClick={() => setSelectedTab('anonymous')}
-              className={`flex-1 px-4 py-2 text-center rounded-l-full font-semibold transition-colors duration-300 ${
-                selectedTab === 'anonymous' ? 'bg-indigo-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
-            >
-              <span className="flex items-center justify-center"><User className="mr-2 h-4 w-4" /> ANONYMOUS</span>
-            </button>
-            <button
-              onClick={() => setSelectedTab('authenticated')}
-              className={`flex-1 px-4 py-2 text-center rounded-r-full font-semibold transition-colors duration-300 ${
-                selectedTab === 'authenticated' ? 'bg-indigo-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
-            >
-              <span className="flex items-center justify-center"><Users className="mr-2 h-4 w-4" /> AUTHENTICATED</span>
-            </button>
-          </div>
-
+    <div>
           {selectedTab === 'anonymous' && (
             <div className="flex flex-col items-center justify-center space-y-6">
               <p className="text-gray-300 text-lg">CHOOSE A CHARACTER AND A NICKNAME</p>
@@ -81,11 +59,9 @@ export default function HomePage({ onStartGame }) {
               </button>
             </div>
           )}
-        </div>
-        <HowToPlay />
-      </div>
+
 
       <Footer />
-    </div>
+      </div>
   );
 }
