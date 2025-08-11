@@ -42,7 +42,7 @@ const getFinalRating = (forwardScore, backwardScore, adjustment) => {
 
 
 // --- MAIN GAME COMPONENT ---
-export default function Game2({ player, onGoBack }) {
+export default function Game3({ player, onGoBack }) {
   const [gameState, setGameState] = useState('instructions'); // instructions, forward_start, forward_play, forward_feedback, break, backward_start, backward_play, backward_feedback, results
   const [sequence, setSequence] = useState([]);
   const [displayIndex, setDisplayIndex] = useState(-1);
@@ -135,7 +135,7 @@ export default function Game2({ player, onGoBack }) {
       }
   }
 
-  // Calculate final scores when game ends
+  // Calculate final scores when game ends and save results
   useEffect(() => {
     if (gameState === 'results' && !finalScores) {
         const forwardScore = getForwardScore(maxForwardSpan);
@@ -145,12 +145,17 @@ export default function Game2({ player, onGoBack }) {
         const speedAdjustment = getSpeedAdjustment(avgTime);
         const finalRating = getFinalRating(forwardScore, backwardScore, speedAdjustment);
 
-        setFinalScores({
+        const scores = {
             forward: { score: forwardScore, span: maxForwardSpan },
             backward: { score: backwardScore, span: maxBackwardSpan },
             speed: { adjustment: speedAdjustment, avgTime: (avgTime / 1000).toFixed(2) },
             finalRating: finalRating
-        });
+        };
+        
+        setFinalScores(scores);
+        
+        // Save results to backend
+        saveResults(scores);
     }
   }, [gameState, maxForwardSpan, maxBackwardSpan, allTrials, finalScores]);
 
@@ -218,6 +223,96 @@ export default function Game2({ player, onGoBack }) {
           </button>
       </div>
   );
+
+  const saveResults = async (scores) => {
+    if (!player) {
+      console.error('No player data available');
+      return;
+    }
+    
+    try {
+      const forwardTrials = allTrials.filter(t => t.phase === 'forward');
+      const backwardTrials = allTrials.filter(t => t.phase === 'backward');
+      
+      const gameData = {
+        player: {
+          nickname: player.nickname,
+          avatar: player.avatar.name
+        },
+        forwardTrials: forwardTrials.map(trial => ({
+          spanLength: trial.span,
+          sequence: trial.sequence,
+          userAnswer: trial.userAnswer,
+          isCorrect: trial.isCorrect,
+          responseTimeMs: trial.time
+        })),
+        backwardTrials: backwardTrials.map(trial => ({
+          spanLength: trial.span,
+          sequence: trial.sequence,
+          userAnswer: trial.userAnswer,
+          isCorrect: trial.isCorrect,
+          responseTimeMs: trial.time
+        })),
+        processingSpeed: {
+          avgResponseTimeMs: parseFloat(scores.speed.avgTime) * 1000,
+          adjustmentValue: scores.speed.adjustment
+        },
+        memoryRating: {
+          forwardSpan: scores.forward.span,
+          backwardSpan: scores.backward.span,
+          forwardScore: scores.forward.score,
+          backwardScore: scores.backward.score,
+          speedAdjustment: scores.speed.adjustment,
+          finalRating: scores.finalRating
+        }
+      };
+      
+      // Add gameType to the data
+      const dataToSend = {
+        ...gameData,
+        gameType: 'game3' // Add game type identifier
+      };
+      
+      console.log('Sending game data to server:', JSON.stringify(dataToSend, null, 2));
+      
+      // Use the unified saveResults.php endpoint with the correct base URL
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/backend';
+      const response = await fetch(`${apiBaseUrl}/saveResults.php`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataToSend)
+      });
+      
+      const responseText = await response.text();
+      console.log('Server response:', responseText);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}, response: ${responseText}`);
+      }
+      
+      let result;
+      try {
+        result = JSON.parse(responseText);
+        console.log('Results saved successfully:', result);
+      } catch (e) {
+        console.error('Failed to parse server response:', e);
+        console.log('Raw response:', responseText);
+        throw new Error('Invalid JSON response from server');
+      }
+      
+      return result;
+      
+    } catch (error) {
+      console.error('Error saving results:', {
+        message: error.message,
+        stack: error.stack,
+        data: error.response ? await error.response.text() : 'No response data'
+      });
+      throw error; // Re-throw to be handled by the caller
+    }
+  };
 
   const renderResultsScreen = () => {
       if (!finalScores) return <div className="text-white">Calculating scores...</div>;

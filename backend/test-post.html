@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Game3 Save</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        pre { background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        button { padding: 10px 15px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #45a049; }
+    </style>
+</head>
+<body>
+    <h2>Test POST to saveGame3Results.php</h2>
+    <button onclick="testPost()">Test POST Request</button>
+    <h3>Request:</h3>
+    <pre id="request">Click the button to send request</pre>
+    <h3>Response:</h3>
+    <pre id="response">Response will appear here</pre>
+    
+    <script>
+    async function testPost() {
+        const requestEl = document.getElementById('request');
+        const responseEl = document.getElementById('response');
+        
+        const testData = {
+            player: {
+                nickname: 'testuser_' + Math.floor(Math.random() * 1000),
+                avatar: 'test'
+            },
+            forwardTrials: [{
+                spanLength: 3,
+                sequence: '123',
+                userAnswer: '123',
+                isCorrect: true,
+                responseTimeMs: 1000
+            }],
+            backwardTrials: [{
+                spanLength: 2,
+                sequence: '12',
+                userAnswer: '21',
+                isCorrect: true,
+                responseTimeMs: 1200
+            }],
+            processingSpeed: {
+                avgResponseTimeMs: 500,
+                adjustmentValue: 1.0
+            },
+            memoryRating: {
+                forwardSpan: 3,
+                backwardSpan: 2,
+                forwardScore: 3,
+                backwardScore: 2,
+                speedAdjustment: 1.0,
+                finalRating: 5
+            }
+        };
+
+        requestEl.textContent = JSON.stringify(testData, null, 2);
+        responseEl.textContent = 'Sending request...';
+        
+        try {
+            const response = await fetch('saveGame3Results.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(testData)
+            });
+            
+            const data = await response.json();
+            responseEl.textContent = 'Status: ' + response.status + ' ' + response.statusText + '\n\n' + 
+                                  JSON.stringify(data, null, 2);
+        } catch (error) {
+            responseEl.textContent = 'Error: ' + error.message;
+            console.error('Error:', error);
+        }
+    }
+    </script>
+</body>
+</html>

@@ -1,8 +1,11 @@
 import { useState } from 'react';
-import { PlayCircle, ChevronLeft, ChevronRight, User, Users } from 'lucide-react';
+import { PlayCircle, ChevronLeft, ChevronRight, User, Users, Brain } from 'lucide-react';
 import Footer from '../components/Footer';
+import axios from 'axios';
 
 export default function HomePage({ onStartGame }) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const [selectedTab, setSelectedTab] = useState('anonymous');
   const [nickname, setNickname] = useState('CoolNickname');
   const [currentAvatar, setCurrentAvatar] = useState(0);
@@ -20,6 +23,34 @@ export default function HomePage({ onStartGame }) {
 
   const handlePrevAvatar = () => {
     setCurrentAvatar((prev) => (prev - 1 + avatars.length) % avatars.length);
+  };
+
+  const handleStartGame = async (gamePath) => {
+    if (!nickname.trim()) {
+      setError('Please enter a nickname');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      // Store user info in local storage for persistence
+      const userData = {
+        nickname: nickname.trim(),
+        avatar: avatars[currentAvatar]
+      };
+      
+      localStorage.setItem('gameUser', JSON.stringify(userData));
+      
+      // Call the parent's onStartGame with the user data and game path
+      onStartGame(userData.nickname, userData.avatar, gamePath);
+    } catch (err) {
+      console.error('Error saving user data:', err);
+      setError('Failed to save user data. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -51,12 +82,43 @@ export default function HomePage({ onStartGame }) {
                 className="bg-gray-700 text-white text-center text-lg rounded-full px-6 py-3 w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300"
                 placeholder="Enter your nickname"
               />
-              <button
-                onClick={onStartGame}
-                className="flex items-center justify-center px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full text-xl font-bold shadow-xl transition-all duration-300 transform hover:scale-105"
-              >
-                <PlayCircle className="mr-2 h-6 w-6" /> START
-              </button>
+              <div className="flex flex-col space-y-4 w-full max-w-sm">
+                <button
+                  onClick={() => handleStartGame('/game1')}
+                  disabled={isLoading}
+                  className="flex items-center justify-center px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full text-xl font-bold shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? (
+                    'Loading...'
+                  ) : (
+                    <>
+                      <PlayCircle className="mr-2 h-6 w-6" />
+                      <span>Start Game 1</span>
+                    </>
+                  )}
+                </button>
+                
+                <button
+                  onClick={() => handleStartGame('/game3')}
+                  disabled={isLoading}
+                  className="flex items-center justify-center px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-full text-xl font-bold shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? (
+                    'Loading...'
+                  ) : (
+                    <>
+                      <Brain className="mr-2 h-6 w-6" />
+                      <span>Start Memory Test</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              
+              {error && (
+                <div className="text-red-400 text-sm mt-2">
+                  {error}
+                </div>
+              )}
             </div>
           )}
 

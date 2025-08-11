@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import Game1 from './pages/Game1';
+import Game3 from './pages/Game3';
 import ArrowGame from './components/ArrowGame/ArrowGame';
 
 // Wrapper component to handle the game state and routing
@@ -12,10 +13,10 @@ function GameWrapper() {
   const location = useLocation();
 
   // This function will be called when the game starts from HomePage
-  const handleStartGame = (nickname, avatar) => {
+  const handleStartGame = (nickname, avatar, gamePath = '/game1') => {
     setPlayerData({ nickname, avatar });
     setIsGameStarted(true);
-    navigate('/game1');
+    navigate(gamePath);
   };
 
   // This function will be called when returning to home from Game1
@@ -24,9 +25,10 @@ function GameWrapper() {
     navigate('/');
   };
 
-  // Handle direct navigation to /game1
+  // Handle direct navigation to game routes
   useEffect(() => {
-    if (location.pathname === '/game1' && !isGameStarted) {
+    const gameRoutes = ['/game1', '/game3'];
+    if (gameRoutes.includes(location.pathname) && !isGameStarted) {
       // Set default player data for testing
       setPlayerData({ nickname: 'Test Player', avatar: { emoji: '👤', color: 'bg-blue-500' } });
       setIsGameStarted(true);
@@ -44,6 +46,9 @@ function GameWrapper() {
         } />
         <Route path="/game2" element={
           <ArrowGame onComplete={handleReturnHome} />
+        } />
+        <Route path="/game3" element={
+          <Game3 player={playerData} onGoBack={handleReturnHome} />
         } />
       </Routes>
     </div>
