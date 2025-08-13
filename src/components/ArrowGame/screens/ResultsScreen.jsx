@@ -10,7 +10,7 @@ const ResultsScreen = ({ results, onRestart, onGoBack, playerName = 'Guest' }) =
       setSaveStatus({ loading: true, error: null, success: false });
       
       try {
-        const response = await fetch('http://localhost/OGgames/backend/saveResults.php', {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/saveResults.php`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
