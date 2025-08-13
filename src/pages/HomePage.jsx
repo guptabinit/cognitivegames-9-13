@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PlayCircle, ChevronLeft, ChevronRight, User, Users, Brain } from 'lucide-react';
+import { PlayCircle, ChevronLeft, ChevronRight, User, Users, Brain, Headphones } from 'lucide-react';
 import Footer from '../components/Footer';
 import axios from 'axios';
 
@@ -109,6 +109,21 @@ export default function HomePage({ onStartGame }) {
                     <>
                       <Brain className="mr-2 h-6 w-6" />
                       <span>Start Memory Test</span>
+                    </>
+                  )}
+                </button>
+                
+                <button
+                  onClick={() => handleStartGame('/game4')}
+                  disabled={isLoading}
+                  className="flex items-center justify-center px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full text-xl font-bold shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? (
+                    'Loading...'
+                  ) : (
+                    <>
+                      <Headphones className="mr-2 h-6 w-6" />
+                      <span>Start Listening Test</span>
                     </>
                   )}
                 </button>

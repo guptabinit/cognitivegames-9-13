@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from
 import HomePage from './pages/HomePage';
 import Game1 from './pages/Game1';
 import Game3 from './pages/Game3';
+import Game4 from './pages/Game4';
 import ArrowGame from './components/ArrowGame/ArrowGame';
 
 // Wrapper component to handle the game state and routing
@@ -27,7 +28,7 @@ function GameWrapper() {
 
   // Handle direct navigation to game routes
   useEffect(() => {
-    const gameRoutes = ['/game1', '/game3'];
+    const gameRoutes = ['/game1', '/game3', '/game4'];
     if (gameRoutes.includes(location.pathname) && !isGameStarted) {
       // Set default player data for testing
       setPlayerData({ nickname: 'Test Player', avatar: { emoji: '👤', color: 'bg-blue-500' } });
@@ -49,6 +50,9 @@ function GameWrapper() {
         } />
         <Route path="/game3" element={
           <Game3 player={playerData} onGoBack={handleReturnHome} />
+        } />
+        <Route path="/game4" element={
+          <Game4 player={playerData} onGoBack={handleReturnHome} />
         } />
       </Routes>
     </div>
