@@ -395,6 +395,31 @@ export default function Game4({ player, onGoBack }) {
     }
   };
 
+  const saveResults = async (results) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/saveGame4Results.php`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          player: {
+            nickname: player?.nickname || 'Anonymous',
+            avatar: player?.avatar || 'default'
+          },
+          storyResults: results
+        })
+      });
+
+      const data = await response.json();
+      if (data.status !== 'success') {
+        console.error('Failed to save results:', data.message);
+      }
+    } catch (error) {
+      console.error('Error saving results:', error);
+    }
+  };
+
   const handleSubmit = () => {
     // Calculate recall percentage
     const recalledTextLower = recalledText.toLowerCase();
@@ -457,6 +482,10 @@ export default function Game4({ player, onGoBack }) {
         },
         finalRating: finalRating
     };
+    
+    // Save results to backend
+    const updatedResults = [...allStoryResults, storyResult];
+    saveResults(updatedResults);
     setAllStoryResults(prev => [...prev, storyResult]);
 
     if (currentStoryIndex < filteredStories.length - 1 && updatedFailures < 2) {
