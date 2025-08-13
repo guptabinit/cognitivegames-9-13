@@ -29,11 +29,54 @@ $gameType = isset($data['gameType']) ? $data['gameType'] : 'game1';
 $conn->begin_transaction();
 
 try {
-    // 1. Insert or get player
-    if (!isset($data['player']) || !isset($data['player']['nickname'])) {
-        throw new Exception('Player information is missing');
+    $gameType = isset($data['gameType']) ? $conn->real_escape_string($data['gameType']) : 'arrow_game';
+    
+    // Handle arrow game results
+    if ($gameType === 'arrow_game') {
+        if (!isset($data['results']) || !isset($data['playerName'])) {
+            throw new Exception('Missing required data: results or playerName');
+        }
+        
+        $playerName = $conn->real_escape_string($data['playerName']);
+        $results = $data['results'];
+        
+        // Prepare data
+        $finalScore = floatval($results['score']);
+        $interpretation = $conn->real_escape_string($results['interpretation']);
+        $baseScore = intval($results['baseScore']);
+        $avgTimingScore = floatval($results['avgTimingScore']);
+        $totalErrors = intval($results['totalErrors']);
+        $errorBreakdown = $conn->real_escape_string(json_encode($results['errorBreakdown'] ?? []));
+        
+        // Insert into arrow_game_results
+        $stmt = $conn->prepare("INSERT INTO arrow_game_results 
+            (player_name, final_score, interpretation, base_score, avg_timing_score, total_errors, error_breakdown) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)");
+            
+        $stmt->bind_param("sdsidss", 
+            $playerName,
+            $finalScore,
+            $interpretation,
+            $baseScore,
+            $avgTimingScore,
+            $totalErrors,
+            $errorBreakdown
+        );
+        
+        $stmt->execute();
+        
+        // Commit transaction
+        $conn->commit();
+        
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Arrow game results saved successfully',
+            'resultId' => $conn->insert_id
+        ]);
+        exit();
     }
     
+    // Handle other game types (existing code)
     $nickname = $conn->real_escape_string($data['player']['nickname']);
     $avatar = $conn->real_escape_string($data['player']['avatar'] ?? '');
     
