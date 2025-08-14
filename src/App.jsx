@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import Game1 from './pages/Game1';
+import Game5 from './pages/Game5';
 import ArrowGame from './components/ArrowGame/ArrowGame';
 
 // Wrapper component to handle the game state and routing
@@ -44,6 +45,9 @@ function GameWrapper() {
         } />
         <Route path="/game2" element={
           <ArrowGame onComplete={handleReturnHome} />
+        } />
+        <Route path="/game5" element={
+          <Game5 onGoBack={handleReturnHome} />
         } />
       </Routes>
     </div>
