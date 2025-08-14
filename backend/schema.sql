@@ -117,3 +117,32 @@ CREATE TABLE IF NOT EXISTS game3_memrating (
     FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
     INDEX idx_memrating_player (player_id)
 );
+
+-- Game5 Emotion Recognition table
+CREATE TABLE IF NOT EXISTS game5_emotion_responses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_id INT NOT NULL,
+    question_id INT NOT NULL,
+    correct_emotion VARCHAR(20) NOT NULL,
+    selected_emotion VARCHAR(20) NOT NULL,
+    is_correct BOOLEAN NOT NULL,
+    response_time_ms INT NOT NULL,
+    intensity VARCHAR(10) NOT NULL,
+    age_group VARCHAR(10) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
+    INDEX idx_emotion_player (player_id)
+);
+
+-- Game5 Results table
+CREATE TABLE IF NOT EXISTS game5_results (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_id INT NOT NULL,
+    total_questions INT NOT NULL,
+    correct_answers INT NOT NULL,
+    accuracy FLOAT NOT NULL,
+    avg_response_time FLOAT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
+    INDEX idx_game5results_player (player_id)
+);
