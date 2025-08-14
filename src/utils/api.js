@@ -8,7 +8,7 @@
  */
 export const saveGameScore = async (score, { userId = 0, gameId = 1 } = {}) => {
   try {
-    const response = await fetch('http://localhost/cognative-games/api/save_score.php', {
+    const response = await fetch('http://localhost/cognitive-games/api/save_score.php', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
