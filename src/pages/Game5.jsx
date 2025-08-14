@@ -736,12 +736,20 @@ const App = () => {
                 <p>Final Score: <span className="font-bold text-3xl text-purple-600">{scoreData.finalScore}</span></p>
             </div>
 
-            <button
-                onClick={handleStartGame}
-                className="mt-8 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg transition-all duration-200"
-            >
-                Start Over
-            </button>
+            <div className="flex flex-col sm:flex-row gap-4 mt-8">
+                <button
+                    onClick={handleStartGame}
+                    className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg transition-all duration-200"
+                >
+                    Start Over
+                </button>
+                <button
+                    onClick={() => window.location.href = '/game5/results'}
+                    className="px-6 py-3 bg-white hover:bg-gray-100 text-purple-600 border border-purple-600 font-bold rounded-xl shadow-lg transition-all duration-200"
+                >
+                    View Detailed Results
+                </button>
+            </div>
         </div>
       );
   };
@@ -769,13 +777,18 @@ const App = () => {
     </div>
   );
   
-  const renderCalculatingScreen = () => (
-    <div className="flex flex-col items-center justify-center p-8 bg-white rounded-xl shadow-lg w-full max-w-xl text-center min-h-[300px]">
+  const renderCalculatingScreen = () => {
+    // Provide a default value if scoreData or finalRating is not available
+    const finalRating = scoreData?.finalRating || 'Calculating...';
+    
+    return (
+      <div className="flex flex-col items-center justify-center p-8 bg-white rounded-xl shadow-lg w-full max-w-xl text-center min-h-[300px]">
         <RefreshCcw size={64} className="animate-spin text-purple-600 mb-4" />
-        <p className="text-2xl font-bold text-gray-800">{scoreData.finalRating}</p>
+        <p className="text-2xl font-bold text-gray-800">{finalRating}</p>
         <p className="text-lg text-gray-600 mt-2">Calculating your scores...</p>
-    </div>
-  );
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 font-sans">

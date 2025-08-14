@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage';
 import Game1 from './pages/Game1';
 import Game3 from './pages/Game3';
 import Game5 from './pages/Game5';
+import Game5Results from './pages/Game5Results';
 import ArrowGame from './components/ArrowGame/ArrowGame';
 
 // Wrapper component to handle the game state and routing
@@ -53,6 +54,9 @@ function GameWrapper() {
         } />
         <Route path="/game5" element={
           <Game5 player={playerData} onGoBack={handleReturnHome} />
+        } />
+        <Route path="/game5/results" element={
+          <Game5Results onGoBack={handleReturnHome} />
         } />
       </Routes>
     </div>
