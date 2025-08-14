@@ -743,12 +743,6 @@ const App = () => {
                 >
                     Start Over
                 </button>
-                <button
-                    onClick={() => window.location.href = '/game5/results'}
-                    className="px-6 py-3 bg-white hover:bg-gray-100 text-purple-600 border border-purple-600 font-bold rounded-xl shadow-lg transition-all duration-200"
-                >
-                    View Detailed Results
-                </button>
             </div>
         </div>
       );
