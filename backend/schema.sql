@@ -118,6 +118,7 @@ CREATE TABLE IF NOT EXISTS game3_memrating (
     INDEX idx_memrating_player (player_id)
 );
 
+<<<<<<< HEAD
 -- Game4 Listening Recall tables
 CREATE TABLE IF NOT EXISTS game4_stories (
     story_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -233,4 +234,46 @@ CREATE TABLE IF NOT EXISTS game6_answers (
     FOREIGN KEY (story_id) REFERENCES game6_stories(story_id) ON DELETE CASCADE,
     INDEX idx_g6answers_result (result_id),
     INDEX idx_g6answers_story (story_id)
+=======
+-- Game5 Emotion Recognition table
+CREATE TABLE IF NOT EXISTS game5_emotion_responses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_id INT NOT NULL,
+    question_id INT NOT NULL,
+    correct_emotion VARCHAR(20) NOT NULL,
+    selected_emotion VARCHAR(20) NOT NULL,
+    is_correct BOOLEAN NOT NULL,
+    response_time_ms INT NOT NULL,
+    intensity VARCHAR(10) NOT NULL,
+    age_group VARCHAR(10) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
+    INDEX idx_emotion_player (player_id)
+);
+
+-- Game5 Results table
+CREATE TABLE IF NOT EXISTS game5_results (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_id INT NOT NULL,
+    total_questions INT NOT NULL,
+    correct_answers INT NOT NULL,
+    accuracy FLOAT NOT NULL,
+    avg_response_time FLOAT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
+    INDEX idx_game5results_player (player_id)
+);
+
+-- Game6 Social and Emotional Context Challenge results table
+CREATE TABLE IF NOT EXISTS game8_results (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_id INT NOT NULL,
+    perspective_score INT NOT NULL,
+    perspective_rating VARCHAR(20) NOT NULL,
+    social_factor_score INT NOT NULL,
+    social_factor_rating VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
+    INDEX idx_game8_player (player_id)
+>>>>>>> f87257c5bfeab351a7d460a652255fcdeadd872e
 );
