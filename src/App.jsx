@@ -6,6 +6,8 @@ import Game3 from './pages/Game3';
 import Game5 from './pages/Game5';
 import Game5Results from './pages/Game5Results';
 import Game8 from './pages/Game8';
+import Game9 from './pages/Game9'; // Import Game9
+import Game10 from './pages/Game10'; 
 import ArrowGame from './components/ArrowGame/ArrowGame';
 
 // Wrapper component to handle the game state and routing
@@ -30,7 +32,7 @@ function GameWrapper() {
 
   // Handle direct navigation to game routes
   useEffect(() => {
-    const gameRoutes = ['/game1', '/game3', '/game5', '/game8'];
+    const gameRoutes = ['/game1', '/game3', '/game5', '/game8', '/game9','/game10']; // Added /game9 to the list
     if (gameRoutes.includes(location.pathname) && !isGameStarted) {
       // Set default player data for testing
       setPlayerData({ nickname: 'Test Player', avatar: { emoji: '👤', color: 'bg-blue-500' } });
@@ -62,6 +64,13 @@ function GameWrapper() {
         <Route path="/game8" element={
           <Game8 player={playerData} onGoBack={handleReturnHome} />
         } />
+        {/* Route for Game9 */}
+        <Route path="/game9" element={
+          <Game9 player={playerData} onGoBack={handleReturnHome} />
+        } />
+          <Route path="/game10" element={
+           <Game10 player={playerData} onGoBack={handleReturnHome} />
+         } />
       </Routes>
     </div>
   );
