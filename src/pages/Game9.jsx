@@ -610,7 +610,7 @@ const saveResults = async (player, taskType, results, overallScore, descriptor) 
             message: error.message,
             stack: error.stack,
             request: {
-                url: 'http://localhost/cognative-games/OGgames/backend/saveGame9Results.php',
+                url: 'http://localhost/backend/saveGame9Results.php',
                 method: 'POST',
                 data: {
                     ...requestData,

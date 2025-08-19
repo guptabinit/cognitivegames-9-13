@@ -577,24 +577,23 @@ try {
         throw new Exception('Failed to save overall results: ' . $stmt->error);
     }
     
-    // Commit transaction
-    $commitResult = $conn->commit();
-    if ($commitResult === false) {
-        throw new Exception('Failed to commit transaction: ' . $conn->error);
-    }
+    // Commit the transaction
+    $conn->commit();
     
-    $response = [
+    // Return success response
+    header('Content-Type: application/json');
+    echo json_encode([
         'status' => 'success',
         'message' => 'Results saved successfully',
-        'playerId' => $player_id,
-        'taskType' => $taskType,
-        'score' => $overallScore,
-        'descriptor' => $descriptor
-    ];
-    
-    error_log('Successfully saved all results: ' . json_encode($response));
-    
-    echo json_encode($response);
+        'data' => [
+            'player_id' => $player_id,
+            'task_type' => $taskType,
+            'overall_score' => $overallScore,
+            'descriptor' => $descriptor,
+            'timestamp' => gmdate('Y-m-d H:i:s')
+        ]
+    ]);
+    exit();
     
 } catch (Exception $e) {
     // Log the full error with stack trace

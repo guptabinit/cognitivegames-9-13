@@ -1,129 +1,130 @@
-import { useState, useEffect } from 'react';
-import { Award, Clock, Lightbulb, Check, X, Users, Smile, Frown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 
+// Main App component
 const App = () => {
-  // Define all the state variables to manage the game flow.
-  const [gamePhase, setGamePhase] = useState('intro'); // 'intro', 'choice', 'waiting', 'reasoning', 'matrix', 'results'
-  const [ageGroup, setAgeGroup] = useState(null); // '10-11' or '12-13'
-  const [chosenReward, setChosenReward] = useState(null); // 'small' or 'large'
-  const [waitedFor, setWaitedFor] = useState(0); // Time waited in seconds
-  const [timerId, setTimerId] = useState(null); // To store the interval ID for the timer
-  const [reasoning, setReasoning] = useState(''); // The user's explanation for their choice
-  const [matrixAnswers, setMatrixAnswers] = useState(Array(3).fill(null)); // Answers for the optional matrix
-  const [score, setScore] = useState(null); // The final calculated score
-  const [interpretation, setInterpretation] = useState(''); // The Likert scale interpretation
+  // State variables to manage the game flow and data
+  const [screen, setScreen] = useState('welcome');
+  const [ageGroup, setAgeGroup] = useState(null);
+  const [rewardType, setRewardType] = useState({});
+  const [timer, setTimer] = useState(null);
+  const [startTime, setStartTime] = useState(null);
+  const [choice, setChoice] = useState(null); // 'immediate' or 'delayed'
+  const [waitDuration, setWaitDuration] = useState(0);
+  const [reasoning, setReasoning] = useState('');
+  const [score, setScore] = useState(null);
+  const [choiceMatrixAnswers, setChoiceMatrixAnswers] = useState({});
 
-  // Define the game parameters based on age.
-  const gameParams = {
+  // Configuration based on age group
+  const configs = {
     '10-11': {
-      small: 'a single piece of candy',
-      large: 'a larger snack or multiple pieces of candy',
-      wait: 120, // 2 minutes
-      scenarios: [
+      waitTime: 180, // 3 minutes in seconds
+      smallReward: 'A piece of candy 🍬',
+      bigReward: 'A small gift card 💳',
+      reasoningQuestions: [
         {
-          question: "Would you rather have a sticker now or a toy later?",
-          small: "Sticker Now",
-          large: "Toy Later"
+          id: 1,
+          question: 'You can have a small toy now, or wait 10 minutes for a bigger, better toy. What do you do?',
+          options: ['Take the small toy now', 'Wait for the bigger toy'],
+          futureOriented: 'Wait for the bigger toy'
         },
         {
-          question: "Would you rather have 5 extra minutes of playtime now or 15 minutes of playtime later?",
-          small: "5 Minutes Now",
-          large: "15 Minutes Later"
-        },
-        {
-          question: "Would you rather have one cookie now or three cookies later?",
-          small: "One Cookie Now",
-          large: "Three Cookies Later"
-        },
-      ]
+          id: 2,
+          question: 'You can get one sticker now, or wait until the end of the day for 5 stickers. What do you do?',
+          options: ['Get one sticker now', 'Wait for the 5 stickers'],
+          futureOriented: 'Wait for the 5 stickers'
+        }
+      ],
     },
     '12-13': {
-      small: '5 minutes of free time',
-      large: '15 minutes of free time or a class privilege',
-      wait: 240, // 4 minutes
-      scenarios: [
+      waitTime: 300, // 5 minutes in seconds
+      smallReward: '5 minutes of free time ⏰',
+      bigReward: '15 minutes of free time 🎮',
+      reasoningQuestions: [
         {
-          question: "Would you rather get a small gift card now or a larger gift card later?",
-          small: "Small Card Now",
-          large: "Large Card Later"
+          id: 1,
+          question: 'You can go to the movies with friends this weekend, or wait until next month to go to a concert with a band you love. What do you do?',
+          options: ['Go to the movies this weekend', 'Wait for the concert next month'],
+          futureOriented: 'Wait for the concert next month'
         },
         {
-          question: "Would you rather have 10 extra minutes on your phone now or an hour of video game time later?",
-          small: "10 Minutes Phone Now",
-          large: "Hour Game Time Later"
-        },
-        {
-          question: "Would you rather have one social media post approved now or the ability to post freely for a week later?",
-          small: "One Post Now",
-          large: "Free Posting Later"
+          id: 2,
+          question: 'You can spend your entire allowance now on a video game you want, or save half for a bigger game bundle later. What do you do?',
+          options: ['Spend it all now', 'Save half for a bigger bundle later'],
+          futureOriented: 'Save half for a bigger bundle later'
         }
-      ]
-    }
+      ],
+    },
   };
 
-  // Effect to handle the timer logic.
+  // Timer logic using useEffect
   useEffect(() => {
-    if (gamePhase === 'waiting' && chosenReward === 'large') {
-      const id = setInterval(() => {
-        setWaitedFor(prevTime => {
-          const newTime = prevTime + 1;
-          // If the full wait time is reached, move to the results phase.
-          if (newTime >= gameParams[ageGroup].wait) {
-            clearInterval(id);
-            setGamePhase('reasoning');
-            return newTime;
-          }
-          return newTime;
-        });
+    if (screen === 'game' && timer > 0) {
+      const interval = setInterval(() => {
+        setTimer(prevTimer => prevTimer - 1);
       }, 1000);
-      setTimerId(id);
-      return () => clearInterval(id); // Cleanup function to stop the timer.
+      return () => clearInterval(interval);
+    } else if (screen === 'game' && timer === 0) {
+      handleDelayedChoice();
     }
-  }, [gamePhase, chosenReward, ageGroup, gameParams]);
+  }, [screen, timer]);
 
-  // State for countdown before game starts
-  const [countdown, setCountdown] = useState(5); // 5 seconds countdown
-  const [countdownActive, setCountdownActive] = useState(false);
+  // Handle the start of the game
+  const startGame = (age) => {
+    setAgeGroup(age);
+    setRewardType(configs[age]);
+    setTimer(configs[age].waitTime);
+    setStartTime(Date.now());
+    setScreen('game');
+  };
 
-  // Effect for the countdown timer
-  useEffect(() => {
-    if (countdownActive && countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (countdown === 0 && countdownActive) {
-      setCountdownActive(false);
-      setGamePhase('waiting');
-      setCountdown(5); // Reset countdown for next time
-    }
-  }, [countdown, countdownActive]);
+  // Handle the choice to take the immediate reward
+  const handleImmediateChoice = () => {
+    setChoice('immediate');
+    setWaitDuration(Math.floor((Date.now() - startTime) / 1000));
+    setScreen('reasoning');
+  };
 
-  // Function to handle the choice of a reward.
-  const handleChoice = (rewardType) => {
-    setChosenReward(rewardType);
-    if (rewardType === 'small') {
-      setGamePhase('reasoning');
-    } else {
-      setCountdownActive(true); // Start the countdown
-    }
+  // Handle the choice to wait for the delayed reward
+  const handleDelayedChoice = () => {
+    setChoice('delayed');
+    setWaitDuration(configs[ageGroup].waitTime);
+    setScreen('reasoning');
+  };
+
+  // Handle form submission for reasoning
+  const handleReasoningSubmit = (e) => {
+    e.preventDefault();
+    calculateScore();
   };
 
   // Function to save results to the backend
-  const saveResults = async (finalScore, finalInterpretation) => {
+  const saveResults = async (rawScore, interpretation) => {
+    const likertScore = rawScore >= 4 ? 5 : 
+                     rawScore >= 3 ? 4 : 
+                     rawScore >= 2 ? 3 : 
+                     rawScore >= 1 ? 2 : 1;
+
     try {
-      const response = await fetch('http://localhost/cognative-games/OGgames/backend/saveGame10Results.php', {
+      const player = {
+        nickname: localStorage.getItem('playerNickname') || 'Anonymous',
+        avatar: localStorage.getItem('playerAvatar') || 'default'
+      };
+
+      const response = await fetch('/cognative-games/OGgames/backend/saveGame10Results.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
         },
         body: JSON.stringify({
-          player_name: 'Player', // You might want to get this from user input or context
-          age_group: ageGroup,
-          chosen_reward: chosenReward,
-          waited_for: waitedFor,
+          player: player,
+          ageGroup: ageGroup,
+          choice: choice,
+          waitDuration: waitDuration,
           reasoning: reasoning,
-          matrix_answers: matrixAnswers,
-          score: finalScore,
-          interpretation: finalInterpretation
+          rawScore: rawScore,
+          likertScore: likertScore,
+          interpretation: interpretation
         }),
       });
       
@@ -131,270 +132,208 @@ const App = () => {
       if (result.status !== 'success') {
         console.error('Failed to save results:', result.message);
       }
+      return result;
     } catch (error) {
       console.error('Error saving results:', error);
+      throw error;
     }
   };
 
-  // Function to calculate the final score based on all criteria.
-  const calculateScore = () => {
+  // Calculate the final score based on the rubric
+  const calculateScore = async () => {
     let rawScore = 0;
 
-    // 1. Initial Choice
-    if (chosenReward === 'large') {
+    // 1. Initial Choice (1 point for choosing to wait)
+    if (choice === 'delayed') {
       rawScore += 1;
     }
 
-    // 2. Wait Duration
-    const waitDuration = gameParams[ageGroup].wait;
-    if (waitedFor >= waitDuration) {
+    // 2. Wait Duration (1 point for waiting at least 80% of the time)
+    const waitPercentage = (waitDuration / configs[ageGroup].waitTime) * 100;
+    if (waitPercentage >= 80) {
       rawScore += 1;
-    } else if (waitedFor / waitDuration >= 0.8) {
+    } else if (waitPercentage > 0) {
       rawScore += 0.5;
     }
 
-    // 3. Reasoning Quality
-    const lowerReasoning = reasoning.toLowerCase();
-    const futureKeywords = ['better', 'more', 'later', 'worth', 'goal', 'plan', 'future'];
-    const isFutureOriented = futureKeywords.some(keyword => lowerReasoning.includes(keyword));
+    // 3. Reasoning Quality (0-2 points)
+    const lowerCaseReasoning = reasoning.toLowerCase();
+    const futureKeywords = ['better', 'more', 'later', 'worth it', 'benefits', 'future', 'goal', 'plan'];
+    const hasFutureReasoning = futureKeywords.some(keyword => lowerCaseReasoning.includes(keyword));
 
-    if (isFutureOriented) {
+    if (hasFutureReasoning) {
       rawScore += 2;
-    } else if (reasoning.length > 5) {
+    } else if (reasoning.length > 5) { // Simple reasoning
       rawScore += 1;
+    } else { // Impulsive or no reasoning
+      rawScore += 0;
     }
-    // If no reasoning is provided, score is 0, which is the default.
 
-    // 4. Choice Matrix
-    const scenarios = gameParams[ageGroup].scenarios;
-    let matrixPoints = 0;
-    matrixAnswers.forEach((answer, index) => {
-      // Check if the user chose the 'large' option.
-      if (answer === scenarios[index].large) {
-        matrixPoints++;
+    // 4. Choice Matrix (optional)
+    const matrixQuestions = configs[ageGroup].reasoningQuestions;
+    matrixQuestions.forEach(q => {
+      if (choiceMatrixAnswers[q.id] === q.futureOriented) {
+        rawScore += 1;
       }
     });
-    rawScore += matrixPoints;
+
+    const interpretation = getLikertInterpretation(rawScore).interpretation;
     
-    // Calculate interpretation
-    let finalInterpretation = '';
-    if (rawScore >= 4) {
-      finalInterpretation = 'Excellent self-control';
-    } else if (rawScore >= 3) {
-      finalInterpretation = 'Above Average';
-    } else if (rawScore >= 2) {
-      finalInterpretation = 'Average';
-    } else if (rawScore >= 1) {
-      finalInterpretation = 'Below Average';
-    } else {
-      finalInterpretation = 'Very limited delay ability';
+    try {
+      await saveResults(rawScore, interpretation);
+      setScore(rawScore);
+      setScreen('results');
+    } catch (error) {
+      console.error('Failed to save results:', error);
+      // Optionally show an error message to the user
     }
-    
-    setScore(rawScore);
-    setInterpretation(finalInterpretation);
-    
-    // Save results to backend
-    saveResults(rawScore, finalInterpretation);
-    
-    // Show results
-    setGamePhase('results');
   };
 
-  // Helper component for buttons with icons and styles.
-  const Button = ({ children, onClick, color = 'blue' }) => {
-    const colorClasses = {
-      blue: 'bg-blue-600 hover:bg-blue-700',
-      red: 'bg-red-600 hover:bg-red-700',
-      green: 'bg-green-600 hover:bg-green-700',
-      gray: 'bg-gray-600 hover:bg-gray-700',
-    };
-    return (
-      <button
-        onClick={onClick}
-        className={`flex items-center justify-center space-x-2 px-6 py-3 rounded-xl shadow-lg transform transition-transform duration-200 ease-in-out hover:scale-105 text-white font-semibold ${colorClasses[color]} focus:outline-none focus:ring-4 focus:ring-${color}-300`}
-      >
-        {children}
-      </button>
-    );
+  // Convert raw score to Likert scale and interpretation
+  const getLikertInterpretation = (rawScore) => {
+    if (rawScore >= 4) return { likert: 5, interpretation: 'Excellent self-control' };
+    if (rawScore >= 3) return { likert: 4, interpretation: 'Above Average' };
+    if (rawScore >= 2) return { likert: 3, interpretation: 'Average' };
+    if (rawScore >= 1) return { likert: 2, interpretation: 'Below Average' };
+    return { likert: 1, interpretation: 'Very limited delay ability' };
   };
 
-  // Main game UI render logic based on the current phase.
-  return (
-    <div className="min-h-screen bg-slate-900 text-white font-inter flex items-center justify-center p-4">
-      <div className="bg-slate-800 p-8 md:p-12 rounded-3xl shadow-2xl max-w-2xl w-full text-center">
-        <h1 className="text-3xl md:text-4xl font-extrabold mb-4 text-slate-100">The Waiting Game</h1>
-        <p className="text-sm md:text-md text-slate-300 mb-8">
-          This activity measures self-control and decision-making by offering a choice between an immediate, smaller reward and a delayed, larger one.
-        </p>
-
-        {/* Phase: Intro - Age Group Selection */}
-        {gamePhase === 'intro' && (
-          <div className="flex flex-col items-center">
-            <h2 className="text-2xl font-bold mb-6">Choose your age group:</h2>
-            <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
-              <Button onClick={() => { setAgeGroup('10-11'); setGamePhase('choice'); }}>
-                <Users />
-                <span>10-11 Years</span>
-              </Button>
-              <Button onClick={() => { setAgeGroup('12-13'); setGamePhase('choice'); }}>
-                <Users />
-                <span>12-13 Years</span>
-              </Button>
+  // Helper function to render the current screen
+  const renderScreen = () => {
+    switch (screen) {
+      case 'welcome':
+        return (
+          <div className="flex flex-col items-center justify-center p-8 text-center bg-white rounded-xl shadow-lg">
+            <h1 className="text-3xl font-bold mb-4 text-slate-800">Delayed Gratification Test</h1>
+            <p className="text-md text-slate-600 mb-6">Choose your age group to begin the activity.</p>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => startGame('10-11')}
+                className="bg-blue-500 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-blue-600 transition-all duration-300 transform hover:scale-105"
+              >
+                10-11 years
+              </button>
+              <button
+                onClick={() => startGame('12-13')}
+                className="bg-purple-500 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-purple-600 transition-all duration-300 transform hover:scale-105"
+              >
+                12-13 years
+              </button>
             </div>
           </div>
-        )}
-
-        {/* Phase: Choice - Reward Selection */}
-        {gamePhase === 'choice' && (
-          <div className="flex flex-col items-center">
-            <h2 className="text-2xl font-bold mb-6">Your Choice:</h2>
-            <p className="text-lg text-slate-200 mb-8">
-              Would you like to have <span className="text-yellow-400 font-bold">{gameParams[ageGroup].small}</span> now,
-              or wait for <span className="text-green-400 font-bold">{gameParams[ageGroup].large}</span> later?
-            </p>
-            <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
-              <Button onClick={() => handleChoice('small')} color="red">
-                <Frown />
-                <span>Get Small Reward Now</span>
-              </Button>
-              <Button onClick={() => handleChoice('large')} color="green">
-                <Smile />
-                <span>Wait for Large Reward</span>
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Phase: Countdown before waiting */}
-        {countdownActive && (
-          <div className="flex flex-col items-center">
-            <h2 className="text-3xl font-bold mb-4">Get Ready!</h2>
-            <p className="text-lg text-slate-200 mb-8">
-              The game will start in...
-            </p>
-            <div className="relative w-48 h-48 flex items-center justify-center mb-8">
-              <Clock className="w-full h-full text-blue-500 opacity-20" />
-              <div className="absolute text-6xl font-extrabold text-blue-400">
-                {countdown}
+        );
+      case 'game':
+        const minutes = Math.floor(timer / 60);
+        const seconds = timer % 60;
+        return (
+          <div className="flex flex-col items-center justify-center p-8 text-center bg-white rounded-xl shadow-lg">
+            <h2 className="text-2xl font-bold mb-4 text-slate-800">Your Choice</h2>
+            <p className="text-lg text-slate-600 mb-2">You can have:</p>
+            <div className="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-8 mb-8">
+              <div className="flex flex-col items-center p-4 bg-gray-100 rounded-lg shadow-inner w-full md:w-auto">
+                <span className="text-4xl">{rewardType.smallReward}</span>
+                <p className="text-sm font-semibold text-slate-600 mt-2">now</p>
+              </div>
+              <p className="text-xl font-bold text-slate-800">OR</p>
+              <div className="flex flex-col items-center p-4 bg-gray-100 rounded-lg shadow-inner w-full md:w-auto">
+                <span className="text-4xl">{rewardType.bigReward}</span>
+                <p className="text-sm font-semibold text-slate-600 mt-2">if you wait</p>
               </div>
             </div>
+            <p className="text-xl font-bold mb-4 text-slate-800">Time Remaining: <span className="text-orange-500">{`${minutes}:${seconds < 10 ? '0' : ''}${seconds}`}</span></p>
+            <button
+              onClick={handleImmediateChoice}
+              className="bg-red-500 text-white font-semibold py-3 px-8 rounded-full shadow-lg hover:bg-red-600 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            >
+              Take the Small Reward Now
+            </button>
           </div>
-        )}
-
-        {/* Phase: Waiting - Timer */}
-        {gamePhase === 'waiting' && !countdownActive && (
-          <div className="flex flex-col items-center">
-            <h2 className="text-3xl font-bold mb-4">The timer has started...</h2>
-            <p className="text-sm text-slate-300 mb-6">
-              You will get the large reward if you wait for {Math.floor(gameParams[ageGroup].wait / 60)} minutes.
-            </p>
-            <div className="relative w-48 h-48 flex items-center justify-center mb-8">
-              <Clock className="w-full h-full text-blue-500 opacity-20" />
-              <div className="absolute text-5xl font-extrabold text-blue-400">
-                {Math.floor((gameParams[ageGroup].wait - waitedFor) / 60)}:{(gameParams[ageGroup].wait - waitedFor) % 60 < 10 ? '0' : ''}{(gameParams[ageGroup].wait - waitedFor) % 60}
-              </div>
-            </div>
-            <p className="text-lg font-semibold text-slate-100 mb-4">
-              Time Waited: {Math.floor(waitedFor / 60)}:{(waitedFor % 60).toString().padStart(2, '0')}
-            </p>
-            <Button onClick={() => { clearInterval(timerId); setGamePhase('reasoning'); }} color="gray">
-              <X />
-              <span>Give Up and Take Small Reward</span>
-            </Button>
-          </div>
-        )}
-
-        {/* Phase: Reasoning - Explain Choice */}
-        {gamePhase === 'reasoning' && (
-          <div className="flex flex-col items-center">
-            <h2 className="text-2xl font-bold mb-4">Explain Your Choice</h2>
-            <p className="text-lg text-slate-200 mb-6">
-              You chose the <span className="font-bold">{chosenReward}</span> reward.
-              Please explain why you made that choice.
-            </p>
-            <textarea
-              className="w-full h-32 p-4 mb-6 rounded-xl bg-slate-700 text-white border-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 resize-none"
-              placeholder="Type your reasoning here..."
-              value={reasoning}
-              onChange={(e) => setReasoning(e.target.value)}
-            ></textarea>
-            <Button onClick={() => setGamePhase('matrix')}>
-              <Lightbulb />
-              <span>Continue to Optional Questions</span>
-            </Button>
-          </div>
-        )}
-
-        {/* Phase: Matrix - Optional Questions */}
-        {gamePhase === 'matrix' && (
-          <div className="flex flex-col items-center">
-            <h2 className="text-2xl font-bold mb-6">Quick "Would You Rather?"</h2>
-            <p className="text-sm text-slate-300 mb-6">
-              Answer a few extra scenarios to see if your reasoning is consistent.
-            </p>
-            {gameParams[ageGroup].scenarios.map((scenario, index) => (
-              <div key={index} className="w-full mb-6 p-4 rounded-xl bg-slate-700 border border-slate-600">
-                <p className="text-lg text-slate-100 font-semibold mb-3">{scenario.question}</p>
-                <div className="flex flex-col space-y-3">
-                  <Button
-                    onClick={() => {
-                      const newAnswers = [...matrixAnswers];
-                      newAnswers[index] = scenario.small;
-                      setMatrixAnswers(newAnswers);
-                    }}
-                    color={matrixAnswers[index] === scenario.small ? 'red' : 'gray'}
-                  >
-                    <Award />
-                    <span>{scenario.small}</span>
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      const newAnswers = [...matrixAnswers];
-                      newAnswers[index] = scenario.large;
-                      setMatrixAnswers(newAnswers);
-                    }}
-                    color={matrixAnswers[index] === scenario.large ? 'green' : 'gray'}
-                  >
-                    <Award />
-                    <span>{scenario.large}</span>
-                  </Button>
+        );
+      case 'reasoning':
+        return (
+          <div className="flex flex-col items-center justify-center p-8 text-center bg-white rounded-xl shadow-lg w-full max-w-xl">
+            <h2 className="text-2xl font-bold mb-4 text-slate-800">Explain Your Choice</h2>
+            <p className="text-md text-slate-600 mb-6">Why did you make that choice?</p>
+            <form onSubmit={handleReasoningSubmit} className="w-full space-y-4">
+              <textarea
+                value={reasoning}
+                onChange={(e) => setReasoning(e.target.value)}
+                className="w-full h-32 p-4 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                placeholder="Write your explanation here..."
+                required
+              />
+              {configs[ageGroup].reasoningQuestions.map((question) => (
+                <div key={question.id} className="text-left">
+                  <p className="font-medium text-slate-700 mb-2">{question.question}</p>
+                  <div className="space-y-2">
+                    {question.options.map((option) => (
+                      <label key={option} className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          name={`question-${question.id}`}
+                          value={option}
+                          checked={choiceMatrixAnswers[question.id] === option}
+                          onChange={() => setChoiceMatrixAnswers(prev => ({
+                            ...prev,
+                            [question.id]: option
+                          }))}
+                          className="text-blue-500"
+                          required
+                        />
+                        <span>{option}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
-            <Button onClick={calculateScore}>
-              <Check />
-              <span>See My Score!</span>
-            </Button>
+              ))}
+              <button
+                type="submit"
+                className="w-full bg-blue-500 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                Submit
+              </button>
+            </form>
           </div>
-        )}
-
-        {/* Phase: Results - Final Score Display */}
-        {gamePhase === 'results' && score !== null && (
-          <div className="flex flex-col items-center">
-            <h2 className="text-3xl font-bold mb-4">Your Results</h2>
-            <div className="bg-slate-700 p-6 rounded-2xl w-full mb-6">
-              <div className="flex justify-between items-center mb-4">
-                <p className="text-lg font-semibold text-slate-200">Raw Score:</p>
-                <p className="text-4xl font-extrabold text-blue-400">{score.toFixed(1)}</p>
-              </div>
-              <div className="flex justify-between items-center mb-4">
-                <p className="text-lg font-semibold text-slate-200">Likert Score:</p>
-                <p className="text-4xl font-extrabold text-yellow-400">
-                  {score >= 4 ? 5 : score >= 3 ? 4 : score >= 2 ? 3 : score >= 1 ? 2 : 1}
-                </p>
-              </div>
-              <div className="flex justify-between items-center">
-                <p className="text-lg font-semibold text-slate-200">Interpretation:</p>
-                <p className="text-xl md:text-2xl font-extrabold text-green-400">{interpretation}</p>
-              </div>
+        );
+      case 'results':
+        const result = getLikertInterpretation(score);
+        return (
+          <div className="flex flex-col items-center justify-center p-8 text-center bg-white rounded-xl shadow-lg w-full max-w-xl">
+            <h2 className="text-2xl font-bold mb-4 text-slate-800">Activity Complete!</h2>
+            <p className="text-lg font-semibold text-slate-600 mb-2">Your Raw Score: <span className="text-blue-500">{score.toFixed(1)}</span></p>
+            <div className="flex items-center space-x-2 mb-4">
+              <p className="text-4xl font-extrabold text-blue-700">{result.likert}</p>
+              <p className="text-xl font-bold text-slate-800">/ 5</p>
             </div>
-            <p className="text-sm text-slate-400 mt-4">
-              Your results are based on your initial choice, how long you waited, your reasoning, and your consistency in the optional matrix questions.
+            <p className="text-lg font-bold mb-4 text-slate-700">Interpretation:</p>
+            <p className="text-2xl font-bold text-green-600">{result.interpretation}</p>
+            <p className="text-sm text-gray-500 mt-4">
+              Wait Duration: {waitDuration} seconds out of {configs[ageGroup].waitTime} seconds.
+              <br />
+              Initial Choice: {choice === 'delayed' ? 'Waited for the big reward' : 'Took the small reward immediately'}.
+              <br />
+              Reasoning: "{reasoning}"
             </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-8 bg-blue-500 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-blue-600 transition-all duration-300"
+            >
+              Play Again
+            </button>
           </div>
-        )}
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="font-sans min-h-screen flex items-center justify-center p-4 bg-slate-200">
+      <div className="bg-white rounded-xl p-8 shadow-2xl w-full max-w-2xl">
+        {renderScreen()}
       </div>
     </div>
   );
-}
+};
+
 export default App;
