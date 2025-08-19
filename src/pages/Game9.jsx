@@ -1,572 +1,932 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 
-// The main application component that manages the game state and renders different screens.
+// Main App Component
 const App = () => {
-  const [gameState, setGameState] = useState('start'); // 'start', 'goNoGo', 'stroop', 'flanker', 'results'
-  const [taskData, setTaskData] = useState({
-    goNoGo: { goResponses: [], noGoResponses: [] },
-    stroop: { congruent: [], incongruent: [] },
-    flanker: { congruent: [], incongruent: [] },
-  });
-
-  // --- Utility Functions ---
-  const shuffleArray = (array) => {
-    for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-  };
-
-  // --- Scoring Logic ---
-  const calculateScores = useCallback(() => {
-    // Shared Likert scoring functions based on the user's provided table
-    const getAccuracyLikert = (accuracy) => {
-      if (accuracy >= 90) return 5;
-      if (accuracy >= 80) return 4;
-      if (accuracy >= 65) return 3;
-      if (accuracy >= 50) return 2;
-      return 1;
-    };
+    const [view, setView] = useState('menu');
+    const [results, setResults] = useState({});
     
-    const getRTLikert = (rt) => {
-      if (rt === 0) return 1; // Score as poor if no correct responses were made
-      if (rt < 500) return 5;
-      if (rt < 600) return 4;
-      if (rt < 800) return 3;
-      if (rt < 1000) return 2;
-      return 1;
-    };
-
-    // --- Go/No-Go Scoring ---
-    const goGoes = taskData.goNoGo.goResponses;
-    const noGoGoes = taskData.goNoGo.noGoResponses;
-
-    const goGoesLength = goGoes.length > 0 ? goGoes.length : 1;
-    const noGoGoesLength = noGoGoes.length > 0 ? noGoGoes.length : 1;
-    
-    const goAccuracy = (goGoes.filter(r => r.correct).length / goGoesLength) * 100;
-    const noGoAccuracy = (noGoGoes.filter(r => r.correct).length / noGoGoesLength) * 100;
-    
-    const goAccuracyLikert = getAccuracyLikert(goAccuracy);
-    const noGoAccuracyLikert = getAccuracyLikert(noGoAccuracy);
-    
-    const commissionErrors = 100 - noGoAccuracy;
-    const omissionErrors = 100 - goAccuracy;
-    
-    const correctGoes = goGoes.filter(r => r.correct);
-    const goRTAverage = correctGoes.length > 0 ? correctGoes.reduce((sum, r) => sum + r.rt, 0) / correctGoes.length : 0;
-    const goRTLikert = getRTLikert(goRTAverage);
-    
-    // --- Stroop Scoring ---
-    const stroopC = taskData.stroop.congruent;
-    const stroopI = taskData.stroop.incongruent;
-    const stroopCLength = stroopC.length > 0 ? stroopC.length : 1;
-    const stroopILength = stroopI.length > 0 ? stroopI.length : 1;
-
-    const stroopCAcc = (stroopC.filter(r => r.correct).length / stroopCLength) * 100;
-    const stroopIAcc = (stroopI.filter(r => r.correct).length / stroopILength) * 100;
-
-    const stroopCAccLikert = getAccuracyLikert(stroopCAcc);
-    const stroopIAccLikert = getAccuracyLikert(stroopIAcc);
-
-    const correctStroopC = stroopC.filter(r => r.correct);
-    const correctStroopI = stroopI.filter(r => r.correct);
-    const stroopC_RT_Avg = correctStroopC.length > 0 ? correctStroopC.reduce((sum, r) => sum + r.rt, 0) / correctStroopC.length : 0;
-    const stroopI_RT_Avg = correctStroopI.length > 0 ? correctStroopI.reduce((sum, r) => sum + r.rt, 0) / correctStroopI.length : 0;
-
-    const stroopC_RT_Likert = getRTLikert(stroopC_RT_Avg);
-    const stroopI_RT_Likert = getRTLikert(stroopI_RT_Avg);
-
-    // --- Flanker Scoring ---
-    const flankerC = taskData.flanker.congruent;
-    const flankerI = taskData.flanker.incongruent;
-    const flankerCLength = flankerC.length > 0 ? flankerC.length : 1;
-    const flankerILength = flankerI.length > 0 ? flankerI.length : 1;
-
-    const flankerCAcc = (flankerC.filter(r => r.correct).length / flankerCLength) * 100;
-    const flankerIAcc = (flankerI.filter(r => r.correct).length / flankerILength) * 100;
-
-    const flankerCAccLikert = getAccuracyLikert(flankerCAcc);
-    const flankerIAccLikert = getAccuracyLikert(flankerIAcc);
-
-    const correctFlankerC = flankerC.filter(r => r.correct);
-    const correctFlankerI = flankerI.filter(r => r.correct);
-    const flankerC_RT_Avg = correctFlankerC.length > 0 ? correctFlankerC.reduce((sum, r) => sum + r.rt, 0) / correctFlankerC.length : 0;
-    const flankerI_RT_Avg = correctFlankerI.length > 0 ? correctFlankerI.reduce((sum, r) => sum + r.rt, 0) / correctFlankerI.length : 0;
-
-    const flankerC_RT_Likert = getRTLikert(flankerC_RT_Avg);
-    const flankerI_RT_Likert = getRTLikert(flankerI_RT_Avg);
-
-    // --- Interference / Conflict Index ---
-    const stroopAccuracyCost = stroopCAcc - stroopIAcc;
-    const stroopRTCost = stroopI_RT_Avg - stroopC_RT_Avg;
-    const flankerAccuracyCost = flankerCAcc - flankerIAcc;
-    const flankerRTCost = flankerI_RT_Avg - flankerC_RT_Avg;
-
-    // --- Inhibition Efficiency Score (Composite) ---
-    const allLikerts = [
-      goAccuracyLikert,
-      noGoAccuracyLikert,
-      goRTLikert,
-      stroopCAccLikert,
-      stroopIAccLikert,
-      stroopC_RT_Likert,
-      stroopI_RT_Likert,
-      flankerCAccLikert,
-      flankerIAccLikert,
-      flankerC_RT_Likert,
-      flankerI_RT_Likert
-    ];
-    const compositeScore = allLikerts.reduce((sum, score) => sum + score, 0) / allLikerts.length;
-
-    let compositeDescriptor = 'Poor';
-    if (compositeScore >= 4.5) compositeDescriptor = 'Excellent';
-    else if (compositeScore >= 3.5) compositeDescriptor = 'Above Average';
-    else if (compositeScore >= 2.5) compositeDescriptor = 'Average';
-    else if (compositeScore >= 1.5) compositeDescriptor = 'Below Average';
-    
-    return {
-      goNoGo: {
-        goAccuracy, noGoAccuracy,
-        goRTAverage,
-        goAccuracyLikert, noGoAccuracyLikert, goRTLikert,
-        omissionErrors: omissionErrors.toFixed(2),
-        commissionErrors: commissionErrors.toFixed(2),
-      },
-      stroop: {
-        stroopCAcc, stroopIAcc,
-        stroopC_RT_Avg, stroopI_RT_Avg,
-        stroopCAccLikert, stroopIAccLikert,
-        stroopC_RT_Likert, stroopI_RT_Likert,
-        accuracyCost: stroopAccuracyCost.toFixed(2),
-        rtCost: stroopRTCost.toFixed(2),
-      },
-      flanker: {
-        flankerCAcc, flankerIAcc,
-        flankerC_RT_Avg, flankerI_RT_Avg,
-        flankerCAccLikert, flankerIAccLikert,
-        flankerC_RT_Likert, flankerI_RT_Likert,
-        accuracyCost: flankerAccuracyCost.toFixed(2),
-        rtCost: flankerRTCost.toFixed(2),
-      },
-      composite: {
-        score: compositeScore.toFixed(2),
-        descriptor: compositeDescriptor,
-      },
-    };
-  }, [taskData]);
-
-  // --- Screen Components ---
-  const StartScreen = () => (
-    <div className="flex flex-col items-center justify-center p-8 bg-slate-800/70 backdrop-blur-sm rounded-3xl shadow-xl w-full max-w-3xl text-center animate-fade-in border border-slate-700">
-      <h1 className="text-4xl md:text-5xl font-extrabold text-[#02c082] mb-4">Cognitive Assessment</h1>
-      <p className="text-gray-300 mb-6 text-lg">
-        This assessment measures your inhibitory control and cognitive flexibility through three tasks.
-      </p>
-      <ul className="text-left list-disc list-inside space-y-2 mb-8 text-gray-300">
-        <li>**Go/No-Go:** Respond to some cues, but resist the urge to respond to others.</li>
-        <li>**Stroop:** Name the color of the text, not the word itself.</li>
-        <li>**Flanker:** Identify the direction of the middle arrow, ignoring the outer arrows.</li>
-      </ul>
-      <button
-        onClick={() => setGameState('goNoGo')}
-        className="px-8 py-4 bg-[#02c082] text-slate-900 font-bold text-xl rounded-full shadow-lg hover:bg-[#03a06c] transition-all duration-300 transform hover:scale-105 active:scale-95"
-      >
-        Start Assessment
-      </button>
-    </div>
-  );
-
-  const GoNoGoTask = () => {
-    const [trialIndex, setTrialIndex] = useState(0);
-    const [isGoTrial, setIsGoTrial] = useState(false);
-    const [isAwaitingResponse, setIsAwaitingResponse] = useState(false);
-    const [goTrials, setGoTrials] = useState([]);
-    const [startTime, setStartTime] = useState(null);
-
-    // Generate trial sequence once
+    // Debug log when view changes
     useEffect(() => {
-      const goTrials = new Array(75).fill(true);
-      const noGoTrials = new Array(25).fill(false);
-      setGoTrials(shuffleArray([...goTrials, ...noGoTrials]));
-    }, []);
-
-    // Effect to handle trial progression and game state transition
+        console.log('Current view changed to:', view);
+    }, [view]);
+    
+    // Debug log when results change
     useEffect(() => {
-      if (trialIndex >= 100) {
-        setGameState('stroop');
-        return;
-      }
-      
-      setIsGoTrial(goTrials[trialIndex]);
-      setStartTime(performance.now());
-      setIsAwaitingResponse(true);
-      
-      // Auto-advance for No-Go trials if no response is given
-      if (!goTrials[trialIndex]) {
-        const timeout = setTimeout(() => {
-          handleNoGoResponse();
-        }, 1500);
-        return () => clearTimeout(timeout);
-      }
-    }, [trialIndex, goTrials, setGameState]);
-
-    const handleGoResponse = () => {
-      if (isAwaitingResponse) {
-        const rt = performance.now() - startTime;
-        
-        if (isGoTrial) {
-          // Correct Go response
-          setTaskData(prev => ({
-            ...prev,
-            goNoGo: {
-              ...prev.goNoGo,
-              goResponses: [...prev.goNoGo.goResponses, { correct: true, rt }],
-            },
-          }));
-        } else {
-          // Incorrect response on a No-Go trial (commission error)
-          setTaskData(prev => ({
-            ...prev,
-            goNoGo: {
-              ...prev.goNoGo,
-              noGoResponses: [...prev.goNoGo.noGoResponses, { correct: false, rt }],
-            },
-          }));
+        if (Object.keys(results).length > 0) {
+            console.log('Results updated:', JSON.parse(JSON.stringify(results)));
         }
-        
-        setIsAwaitingResponse(false);
-        setTrialIndex(prev => prev + 1);
-      }
-    };
-
-    const handleNoGoResponse = () => {
-      if (isAwaitingResponse) {
-        // Correct no-response on a No-Go trial
-        setTaskData(prev => ({
-          ...prev,
-          goNoGo: {
-            ...prev.goNoGo,
-            noGoResponses: [...prev.goNoGo.noGoResponses, { correct: true }],
-          },
-        }));
-        setIsAwaitingResponse(false);
-        setTrialIndex(prev => prev + 1);
-      }
-    };
+    }, [results]);
     
-    return (
-      <div className="flex flex-col items-center justify-center p-8 bg-slate-800/70 backdrop-blur-sm rounded-3xl shadow-xl w-full max-w-3xl text-center animate-fade-in border border-slate-700">
-        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Go/No-Go Task</h2>
-        <p className="text-gray-300 mb-8 text-lg">
-          Trial {trialIndex + 1} of 100. Press the button for a <span className="text-[#02c082] font-bold">Go</span> trial. Do nothing for a <span className="text-red-500 font-bold">No-Go</span> trial.
-        </p>
-        <div className="w-40 h-40 md:w-60 md:h-60 bg-gray-600/20 border-4 border-gray-600 rounded-2xl flex items-center justify-center p-4 mb-8 text-center text-5xl font-extrabold text-white">
-          {isGoTrial ? 'GO' : 'NO-GO'}
-        </div>
-        <button
-          onClick={handleGoResponse}
-          disabled={!isAwaitingResponse}
-          className={`px-8 py-4 rounded-full font-bold text-xl shadow-lg transition-all duration-300 ${
-            isAwaitingResponse
-              ? 'bg-[#02c082] text-slate-900 hover:bg-[#03a06c] transform hover:scale-105 active:scale-95'
-              : 'bg-gray-700 text-gray-500 cursor-not-allowed'
-          }`}
-        >
-          Respond
-        </button>
-      </div>
-    );
-  };
-  
-  const StroopTask = () => {
-    const [trialIndex, setTrialIndex] = useState(0);
-    const [currentTrial, setCurrentTrial] = useState(null);
-    const [startTime, setStartTime] = useState(null);
+    const renderView = () => {
+        switch (view) {
+            case 'menu':
+                return <MainMenu setView={setView} />;
+            case 'goNoGo':
+                return <GoNoGoTask setView={setView} setResults={setResults} view={view} />;
+            case 'stroop':
+                return <StroopTask setView={setView} setResults={setResults} view={view} />;
+            case 'flanker':
+                return <FlankerTask setView={setView} setResults={setResults} view={view} />;
+            case 'results':
+                return <ResultsView results={results} setView={setView} />;
+            default:
+                return <MainMenu setView={setView} />;
+        }
+    };
 
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-4">
+            <div className="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-lg">
+                {renderView()}
+            </div>
+        </div>
+    );
+};
+
+// Utility Functions
+const getAccuracyScore = (accuracy) => {
+    if (accuracy >= 0.9) return 5;
+    if (accuracy >= 0.8) return 4;
+    if (accuracy >= 0.7) return 3;
+    if (accuracy >= 0.6) return 2;
+    return 1;
+};
+
+const getRtScore = (rt) => {
+    if (rt <= 500) return 5;
+    if (rt <= 750) return 4;
+    if (rt <= 1000) return 3;
+    if (rt <= 1500) return 2;
+    return 1;
+};
+
+// Helper function to get performance descriptor from a score (0-5 scale)
+const getDescriptor = (score) => {
+    if (score >= 4.5) return 'Excellent';
+    if (score >= 3.5) return 'Good';
+    if (score >= 2.5) return 'Average';
+    if (score >= 1.5) return 'Below Average';
+    return 'Poor';
+};
+
+// Screen Components
+const StartScreen = ({ setView }) => (
+    <div className="text-center space-y-8 max-w-2xl mx-auto">
+        <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#02c082] to-[#0d8aff] mb-6">
+            Cognitive Assessment
+        </h1>
+        <p className="text-lg text-gray-300 mb-8">
+            This assessment includes three cognitive tasks to evaluate different aspects of your executive function:
+        </p>
+        <ul className="text-left space-y-4 text-gray-300 mb-12 max-w-md mx-auto">
+            <li>• <strong>Go/No-Go:</strong> Press space for squares, do nothing for circles.</li>
+            <li>• <strong>Stroop:</strong> Name the color of the word, not the word itself.</li>
+            <li>• <strong>Flanker:</strong> Identify the direction of the middle arrow, ignoring the outer arrows.</li>
+        </ul>
+        <button
+            onClick={() => setView('goNoGo')}
+            className="px-8 py-4 bg-[#02c082] text-slate-900 font-bold text-xl rounded-full shadow-lg hover:bg-[#03a06c] transition-all duration-300 transform hover:scale-105 active:scale-95"
+        >
+            Start Assessment
+        </button>
+    </div>
+);
+
+const MainMenu = ({ setView }) => (
+    <div className="text-center space-y-6">
+        <h1 className="text-3xl font-bold mb-4 text-orange-400">Cognitive Assessment Tasks</h1>
+        <p className="text-gray-300">Choose a task to begin the assessment.</p>
+        <div className="space-y-4">
+            <button
+                onClick={() => setView('goNoGo')}
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300"
+            >
+                Go/No-Go Task
+            </button>
+            <button
+                onClick={() => setView('stroop')}
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300"
+            >
+                Stroop Task
+            </button>
+            <button
+                onClick={() => setView('flanker')}
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300"
+            >
+                Flanker Task
+            </button>
+        </div>
+    </div>
+);
+
+
+// Go/No-Go Task Component
+const GoNoGoTask = ({ setView, setResults, view }) => {
+    const totalTrials = 100;
+    const goTrials = 75;
+    const noGoTrials = 25;
+
+    const [trial, setTrial] = useState(0);
+    const [currentStimulus, setCurrentStimulus] = useState(null);
+    const [goCount, setGoCount] = useState(0);
+    const [noGoCount, setNoGoCount] = useState(0);
+    const [correctGo, setCorrectGo] = useState(0);
+    const [correctNoGo, setCorrectNoGo] = useState(0);
+    const [goRTs, setGoRTs] = useState([]);
+    const [trialStartTime, setTrialStartTime] = useState(null);
+    const [isResponse, setIsResponse] = useState(false);
+
+    // Function to generate the trial sequence
+    const generateSequence = () => {
+        const sequence = [];
+        for (let i = 0; i < goTrials; i++) sequence.push('go');
+        for (let i = 0; i < noGoTrials; i++) sequence.push('no-go');
+        // Shuffle the sequence for random order
+        return sequence.sort(() => Math.random() - 0.5);
+    };
+
+    const [trialSequence, setTrialSequence] = useState(generateSequence());
+
+    // Effect to handle trial progression and scoring
+    useEffect(() => {
+        if (trial >= totalTrials) {
+            // End of task, calculate and set results
+            const goAccuracy = (correctGo / Math.max(goCount, 1)) * 100;
+            const noGoAccuracy = (correctNoGo / Math.max(noGoCount, 1)) * 100;
+            const commissionErrors = noGoCount - correctNoGo;
+            const omissionErrors = goCount - correctGo;
+            const avgGoRT = goRTs.length > 0 ? goRTs.reduce((a, b) => a + b) / goRTs.length : 0;
+            const subscore = getAccuracyScore(goAccuracy / 100);
+
+            setResults({
+                task: 'Go/No-Go',
+                goAccuracy,
+                noGoAccuracy,
+                commissionErrors,
+                omissionErrors,
+                avgGoRT,
+                subscore,
+                // Add these for compatibility with ResultsView
+                correctC: goAccuracy,
+                correctI: noGoAccuracy,
+                avgCRT: avgGoRT,
+                avgIRT: 0, // Not applicable for Go/No-Go
+                accuracyCost: 0, // Not applicable for Go/No-Go
+                rtCost: 0, // Not applicable for Go/No-Go
+                subscoreC: subscore,
+                subscoreI: 0 // Not applicable for Go/No-Go
+            });
+            setView('results');
+            return;
+        }
+
+        // Start a new trial
+        const currentTrialType = trialSequence[trial];
+        setCurrentStimulus(currentTrialType === 'go' ? 'Go (Square)' : 'No-Go (Circle)');
+        setTrialStartTime(Date.now());
+        setIsResponse(false);
+
+        // Timeout for No-Go trials
+        if (currentTrialType === 'no-go') {
+            const timeout = setTimeout(() => {
+                if (!isResponse) {
+                    setCorrectNoGo(prev => prev + 1);
+                    setNoGoCount(prev => prev + 1);
+                }
+                setTimeout(() => setTrial(prev => prev + 1), 500); // Short delay before next trial
+            }, 1500); // 1.5 seconds to wait for a response
+            return () => clearTimeout(timeout);
+        } else {
+             // For Go trials, wait for a key press
+            const timeout = setTimeout(() => {
+                if (!isResponse) {
+                    setGoCount(prev => prev + 1);
+                    setTimeout(() => setTrial(prev => prev + 1), 500);
+                }
+            }, 1500);
+            return () => clearTimeout(timeout);
+        }
+    }, [trial, setView, setResults, trialSequence, isResponse]);
+
+    // Keyboard event listener for Go/No-Go response
+    useEffect(() => {
+        const handleKeyPress = (e) => {
+            // Check if a response has already been made for this trial
+            if (isResponse || view !== 'goNoGo') return;
+
+            const trialType = trialSequence[trial];
+            const reactionTime = Date.now() - trialStartTime;
+            
+            if (e.key === ' ') { // Space bar is the "Go" response
+                setIsResponse(true);
+                if (trialType === 'go') {
+                    setCorrectGo(prev => prev + 1);
+                    setGoCount(prev => prev + 1);
+                    setGoRTs(prev => [...prev, reactionTime]);
+                } else { // Pressed on a No-Go trial (Commission Error)
+                    setNoGoCount(prev => prev + 1);
+                }
+            } else { // Any other key press is an error
+                if (trialType === 'go') {
+                    setGoCount(prev => prev + 1);
+                } else { // No-Go, but different key (still an error)
+                    setNoGoCount(prev => prev + 1);
+                }
+            }
+            setTimeout(() => setTrial(prev => prev + 1), 500); // Short delay before next trial
+        };
+
+        window.addEventListener('keydown', handleKeyPress);
+        return () => window.removeEventListener('keydown', handleKeyPress);
+    }, [trial, trialSequence, trialStartTime, isResponse, view]);
+
+    if (trial >= totalTrials) {
+        return <div className="text-center">Loading results...</div>;
+    }
+
+    return (
+        <div className="text-center space-y-6">
+            <h2 className="text-2xl font-bold mb-4">Go/No-Go Task</h2>
+            <p className="text-lg">Trial {trial + 1} of {totalTrials}</p>
+            <p className="text-gray-300">Press the SPACEBAR for a <span className="font-bold text-green-400">Go</span> trial. Do nothing for a <span className="font-bold text-red-400">No-Go</span> trial.</p>
+            <div className="flex items-center justify-center h-48">
+                {currentStimulus === 'Go (Square)' && <div className="w-24 h-24 bg-green-500 rounded-lg animate-pulse-once"></div>}
+                {currentStimulus === 'No-Go (Circle)' && <div className="w-24 h-24 bg-red-500 rounded-full animate-pulse-once"></div>}
+            </div>
+            <p className="text-xl font-semibold">{currentStimulus}</p>
+        </div>
+    );
+};
+
+// Stroop Task Component
+const StroopTask = ({ setView, setResults, view }) => {
+    // State for game logic and scoring
+    const totalTrials = 60;
     const colors = ['red', 'blue', 'green', 'yellow'];
     const words = ['RED', 'BLUE', 'GREEN', 'YELLOW'];
-    
-    // Generate trials with a fixed count of 30 congruent and 30 incongruent.
-    useEffect(() => {
-        let congruentTrials = [];
-        let incongruentTrials = [];
 
-        // Generate 30 congruent trials
-        for (let i = 0; i < 30; i++) {
-            const color = colors[Math.floor(Math.random() * colors.length)];
-            congruentTrials.push({ word: color.toUpperCase(), color: color });
-        }
+    const [trial, setTrial] = useState(0);
+    const [currentStimulus, setCurrentStimulus] = useState({});
+    const [congruentRTs, setCongruentRTs] = useState([]);
+    const [incongruentRTs, setIncongruentRTs] = useState([]);
+    const [correctCongruent, setCorrectCongruent] = useState(0);
+    const [correctIncongruent, setCorrectIncongruent] = useState(0);
+    const [congruentCount, setCongruentCount] = useState(0);
+    const [incongruentCount, setIncongruentCount] = useState(0);
+    const [trialStartTime, setTrialStartTime] = useState(null);
 
-        // Generate 30 incongruent trials
-        for (let i = 0; i < 30; i++) {
-            let color = colors[Math.floor(Math.random() * colors.length)];
-            let word;
+    // Generate a new trial stimulus
+    const generateTrial = () => {
+        const isCongruent = Math.random() < 0.5;
+        const word = words[Math.floor(Math.random() * words.length)];
+        let color;
+        if (isCongruent) {
+            color = word.toLowerCase();
+            setCongruentCount(prev => prev + 1);
+        } else {
             do {
-                word = words[Math.floor(Math.random() * words.length)];
-            } while (word.toLowerCase() === color);
-            incongruentTrials.push({ word: word, color: color });
+                color = colors[Math.floor(Math.random() * colors.length)];
+            } while (color === word.toLowerCase());
+            setIncongruentCount(prev => prev + 1);
         }
-        
-        setCurrentTrial(shuffleArray([...congruentTrials, ...incongruentTrials]));
-    }, []);
+        setCurrentStimulus({ word, color, isCongruent });
+        setTrialStartTime(Date.now());
+    };
 
+    // Effect to start the game and progress trials
+    useEffect(() => {
+        if (trial >= totalTrials) {
+            // End of task, calculate and set results
+            const correctC = (correctCongruent / Math.max(congruentCount, 1)) * 100;
+            const correctI = (correctIncongruent / Math.max(incongruentCount, 1)) * 100;
+            const avgCRT = congruentRTs.length > 0 ? congruentRTs.reduce((a, b) => a + b) / congruentRTs.length : 0;
+            const avgIRT = incongruentRTs.length > 0 ? incongruentRTs.reduce((a, b) => a + b) / incongruentRTs.length : 0;
+            const accuracyCost = correctC - correctI;
+            const rtCost = avgIRT - avgCRT;
+            const subscoreC = getAccuracyScore(correctC / 100);
+            const subscoreI = getAccuracyScore(correctI / 100);
+            const overallScore = (subscoreC + subscoreI) / 2;
+
+            const results = {
+                task: 'Stroop',
+                correctC,
+                correctI,
+                avgCRT,
+                avgIRT,
+                accuracyCost,
+                rtCost,
+                subscoreC,
+                subscoreI,
+                // Add these for compatibility with saveResults
+                goAccuracy: 0, // Not applicable for Stroop
+                noGoAccuracy: 0, // Not applicable for Stroop
+                commissionErrors: 0, // Not applicable for Stroop
+                omissionErrors: 0, // Not applicable for Stroop
+                avgGoRT: 0, // Not applicable for Stroop
+                subscore: overallScore
+            };
+            
+            // Set results first to ensure they're available in the ResultsView
+            setResults(results);
+            
+            // Save results to the backend
+            const player = {
+                nickname: localStorage.getItem('playerNickname') || 'Anonymous',
+                avatar: localStorage.getItem('playerAvatar') || 'default'
+            };
+            
+            // Use setTimeout to ensure setResults completes before changing view
+            setTimeout(() => {
+                saveResults(player, 'stroop', {
+                    congruentAccuracy: correctC,
+                    incongruentAccuracy: correctI,
+                    avgCongruentRT: avgCRT,
+                    avgIncongruentRT: avgIRT,
+                    accuracyCost,
+                    rtCost,
+                    congruentSubscore: subscoreC,
+                    incongruentSubscore: subscoreI
+                }, overallScore, getDescriptor(overallScore));
+                
+                setView('results');
+            }, 0);
+            return;
+        }
+
+        generateTrial();
+    }, [trial, setView, setResults]);
+
+    // Handle user's click response
     const handleResponse = (selectedColor) => {
-      if (currentTrial && trialIndex < currentTrial.length) {
-        const rt = performance.now() - startTime;
-        const correct = selectedColor === currentTrial[trialIndex].color;
-        
-        const response = { correct, rt, trial: currentTrial[trialIndex] };
-        
-        if (currentTrial[trialIndex].word.toLowerCase() === currentTrial[trialIndex].color) {
-          setTaskData(prev => ({
-            ...prev,
-            stroop: { ...prev.stroop, congruent: [...prev.stroop.congruent, response] }
-          }));
+        const reactionTime = Date.now() - trialStartTime;
+        if (currentStimulus.isCongruent) {
+            setCongruentRTs(prev => [...prev, reactionTime]);
+            if (selectedColor === currentStimulus.color) {
+                setCorrectCongruent(prev => prev + 1);
+            }
         } else {
-          setTaskData(prev => ({
-            ...prev,
-            stroop: { ...prev.stroop, incongruent: [...prev.stroop.incongruent, response] }
-          }));
+            setIncongruentRTs(prev => [...prev, reactionTime]);
+            if (selectedColor === currentStimulus.color) {
+                setCorrectIncongruent(prev => prev + 1);
+            }
         }
-
-        setTrialIndex(prev => prev + 1);
-      }
+        // Generate next trial after a short delay
+        setTimeout(() => setTrial(prev => prev + 1), 500);
     };
-    
-    // Effect to handle trial progression and game state transition
-    useEffect(() => {
-      if (trialIndex >= 60) {
-        setGameState('flanker');
-        return;
-      }
-      setStartTime(performance.now());
-    }, [trialIndex, setGameState]);
 
-    if (!currentTrial || trialIndex >= currentTrial.length) {
-      return null;
+    if (trial >= totalTrials) {
+        return <div className="text-center">Loading results...</div>;
     }
 
-    const trial = currentTrial[trialIndex];
-
     return (
-      <div className="flex flex-col items-center justify-center p-8 bg-slate-800/70 backdrop-blur-sm rounded-3xl shadow-xl w-full max-w-3xl text-center animate-fade-in border border-slate-700">
-        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Stroop Task</h2>
-        <p className="text-gray-300 mb-8 text-lg">
-          Trial {trialIndex + 1} of 60. Click the button that matches the <span className="font-bold">ink color</span> of the word.
-        </p>
-        <div className="w-full text-center mb-8">
-          <p className={`text-6xl md:text-8xl font-extrabold`} style={{ color: trial.color }}>
-            {trial.word}
-          </p>
+        <div className="text-center space-y-6">
+            <h2 className="text-2xl font-bold mb-4">Stroop Task</h2>
+            <p className="text-lg">Trial {trial + 1} of {totalTrials}</p>
+            <p className="text-gray-300">Name the <span className="font-bold">ink color</span>, not the word.</p>
+            <div className="flex items-center justify-center h-48">
+                <p className="text-6xl font-black transition-colors duration-300" style={{ color: currentStimulus.color }}>
+                    {currentStimulus.word}
+                </p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                {colors.map(color => (
+                    <button
+                        key={color}
+                        onClick={() => handleResponse(color)}
+                        className={`py-3 px-6 font-bold rounded-lg transition-colors duration-200 focus:outline-none focus:ring-4 focus:ring-${color}-500`}
+                        style={{ backgroundColor: color, color: color === 'yellow' ? 'black' : 'white' }}
+                    >
+                        {color.toUpperCase()}
+                    </button>
+                ))}
+            </div>
         </div>
-        <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
-          {colors.map(color => (
-            <button
-              key={color}
-              onClick={() => handleResponse(color)}
-              className={`p-4 rounded-full font-bold text-xl shadow-lg transition-all duration-300 text-slate-900 bg-[#02c082] hover:bg-[#03a06c]`}
-            >
-              {color.charAt(0).toUpperCase() + color.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
     );
-  };
-  
-  const FlankerTask = () => {
-    const [trialIndex, setTrialIndex] = useState(0);
-    const [currentTrial, setCurrentTrial] = useState(null);
-    const [startTime, setStartTime] = useState(null);
-    
-    const directions = ['left', 'right'];
+};
 
-    // Generate trials with a fixed count of 30 congruent and 30 incongruent.
-    useEffect(() => {
-      const congruent = directions.flatMap(dir =>
-        Array(15).fill({ direction: dir, type: 'congruent' })
-      );
-      const incongruent = directions.flatMap(dir =>
-        Array(15).fill({ direction: dir, type: 'incongruent' })
-      );
-      setCurrentTrial(shuffleArray([...congruent, ...incongruent]));
-    }, []);
-    
-    const handleResponse = (selectedDirection) => {
-      if (currentTrial && trialIndex < currentTrial.length) {
-        const rt = performance.now() - startTime;
-        const correct = selectedDirection === currentTrial[trialIndex].direction;
-        
-        const response = { correct, rt, trial: currentTrial[trialIndex] };
-        
-        if (currentTrial[trialIndex].type === 'congruent') {
-          setTaskData(prev => ({
-            ...prev,
-            flanker: { ...prev.flanker, congruent: [...prev.flanker.congruent, response] }
-          }));
+// Flanker Task Component
+const FlankerTask = ({ setView, setResults, view }) => {
+    // State for game logic and scoring
+    const totalTrials = 60;
+
+    const [trial, setTrial] = useState(0);
+    const [currentStimulus, setCurrentStimulus] = useState(null);
+    const [congruentRTs, setCongruentRTs] = useState([]);
+    const [incongruentRTs, setIncongruentRTs] = useState([]);
+    const [correctCongruent, setCorrectCongruent] = useState(0);
+    const [correctIncongruent, setCorrectIncongruent] = useState(0);
+    const [trialStartTime, setTrialStartTime] = useState(null);
+
+    // Generate a new trial stimulus
+    const generateTrial = () => {
+        const isCongruent = Math.random() < 0.5;
+        const middleArrow = Math.random() < 0.5 ? '←' : '→';
+        let arrows;
+        if (isCongruent) {
+            arrows = `${middleArrow}${middleArrow}${middleArrow}${middleArrow}${middleArrow}`;
         } else {
-          setTaskData(prev => ({
-            ...prev,
-            flanker: { ...prev.flanker, incongruent: [...prev.flanker.incongruent, response] }
-          }));
+            const sideArrow = middleArrow === '←' ? '→' : '←';
+            arrows = `${sideArrow}${sideArrow}${middleArrow}${sideArrow}${sideArrow}`;
+        }
+        setCurrentStimulus({ arrows, middleArrow, isCongruent });
+        setTrialStartTime(Date.now());
+    };
+
+    // Effect to start the game and progress trials
+    useEffect(() => {
+        if (trial >= totalTrials) {
+            // End of task, calculate and set results
+            const correctC = (correctCongruent / 30) * 100;
+            const correctI = (correctIncongruent / 30) * 100;
+            const avgCRT = congruentRTs.length > 0 ? congruentRTs.reduce((a, b) => a + b) / congruentRTs.length : 0;
+            const avgIRT = incongruentRTs.length > 0 ? incongruentRTs.reduce((a, b) => a + b) / incongruentRTs.length : 0;
+            const accuracyCost = correctC - correctI;
+            const rtCost = avgIRT - avgCRT;
+            const subscoreC = getAccuracyScore(correctC / 100);
+            const subscoreI = getAccuracyScore(correctI / 100);
+            const overallScore = (subscoreC + subscoreI) / 2;
+            
+            const results = {
+                task: 'Flanker',
+                correctC,
+                correctI,
+                avgCRT,
+                avgIRT,
+                accuracyCost,
+                rtCost,
+                subscoreC,
+                subscoreI,
+                // Add these for compatibility with saveResults
+                goAccuracy: 0, // Not applicable for Flanker
+                noGoAccuracy: 0, // Not applicable for Flanker
+                commissionErrors: 0, // Not applicable for Flanker
+                omissionErrors: 0, // Not applicable for Flanker
+                avgGoRT: 0, // Not applicable for Flanker
+                subscore: overallScore
+            };
+            
+            // Set results first to ensure they're available in the ResultsView
+            setResults(results);
+            
+            // Save results to the backend
+            const player = {
+                nickname: localStorage.getItem('playerNickname') || 'Anonymous',
+                avatar: localStorage.getItem('playerAvatar') || 'default'
+            };
+            
+            // Use setTimeout to ensure setResults completes before changing view
+            setTimeout(() => {
+                saveResults(player, 'flanker', {
+                    congruentAccuracy: correctC,
+                    incongruentAccuracy: correctI,
+                    avgCongruentRT: avgCRT,
+                    avgIncongruentRT: avgIRT,
+                    accuracyCost,
+                    rtCost,
+                    congruentSubscore: subscoreC,
+                    incongruentSubscore: subscoreI
+                }, overallScore, getDescriptor(overallScore));
+                
+                setView('results');
+            }, 0);
+            return;
         }
 
-        setTrialIndex(prev => prev + 1);
-        setStartTime(performance.now());
-      }
-    };
-    
-    useEffect(() => {
-      if (trialIndex === 60) {
-        setGameState('results');
-      }
-    }, [trialIndex]);
+        generateTrial();
+    }, [trial, setView, setResults]);
 
-    if (!currentTrial || trialIndex >= currentTrial.length) {
-      return null;
+    // Keyboard event listener for Flanker response
+    useEffect(() => {
+        const handleKeyPress = (e) => {
+            if (view !== 'flanker') return;
+
+            const reactionTime = Date.now() - trialStartTime;
+            const isCorrect = (e.key === 'ArrowLeft' && currentStimulus.middleArrow === '←') || (e.key === 'ArrowRight' && currentStimulus.middleArrow === '→');
+            
+            if (currentStimulus.isCongruent) {
+                setCongruentRTs(prev => [...prev, reactionTime]);
+                if (isCorrect) {
+                    setCorrectCongruent(prev => prev + 1);
+                }
+            } else {
+                setIncongruentRTs(prev => [...prev, reactionTime]);
+                if (isCorrect) {
+                    setCorrectIncongruent(prev => prev + 1);
+                }
+            }
+            setTrial(prev => prev + 1);
+        };
+        
+        window.addEventListener('keydown', handleKeyPress);
+        return () => window.removeEventListener('keydown', handleKeyPress);
+    }, [trial, currentStimulus, trialStartTime, view]);
+
+    if (trial >= totalTrials) {
+        return <div className="text-center">Loading results...</div>;
     }
 
-    const trial = currentTrial[trialIndex];
-    const middleArrow = trial.direction === 'left' ? '←' : '→';
-    const outerArrows = trial.direction === 'left' ? '→' : '←';
-    const displayArrows = trial.type === 'congruent' ? 
-      `${middleArrow}${middleArrow}${middleArrow}${middleArrow}${middleArrow}` :
-      `${outerArrows}${outerArrows}${middleArrow}${outerArrows}${outerArrows}`;
-      
     return (
-      <div className="flex flex-col items-center justify-center p-8 bg-slate-800/70 backdrop-blur-sm rounded-3xl shadow-xl w-full max-w-3xl text-center animate-fade-in border border-slate-700">
-        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Flanker Task</h2>
-        <p className="text-gray-300 mb-8 text-lg">
-          Trial {trialIndex + 1} of 60. Click the button that matches the direction of the <span className="font-bold">middle arrow</span>.
-        </p>
-        <div className="w-full text-center mb-8">
-          <p className="text-6xl md:text-8xl font-mono text-gray-300">
-            {displayArrows}
-          </p>
-        </div>
-        <div className="flex gap-4">
-          <button
-            onClick={() => handleResponse('left')}
-            className="px-8 py-4 bg-[#02c082] text-slate-900 font-bold text-xl rounded-full shadow-lg hover:bg-[#03a06c] transition-all duration-300 transform hover:scale-105 active:scale-95"
-          >
-            Left
-          </button>
-          <button
-            onClick={() => handleResponse('right')}
-            className="px-8 py-4 bg-[#02c082] text-slate-900 font-bold text-xl rounded-full shadow-lg hover:bg-[#03a06c] transition-all duration-300 transform hover:scale-105 active:scale-95"
-          >
-            Right
-          </button>
-        </div>
-      </div>
-    );
-  };
-  
-  const ResultsScreen = () => {
-    const scores = calculateScores();
-    return (
-      <div className="flex flex-col items-center p-6 md:p-10 bg-slate-800/70 backdrop-blur-sm rounded-3xl shadow-xl w-full max-w-4xl animate-fade-in border border-slate-700">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-[#02c082] mb-4">Assessment Complete!</h1>
-        <p className="text-xl text-gray-300 mb-8">Here is your detailed score breakdown.</p>
-        
-        {scores && (
-          <div className="w-full">
-            <div className="bg-slate-700 p-6 rounded-2xl shadow-inner mb-8 text-center border border-slate-600">
-              <h3 className="text-2xl font-bold text-[#02c082] mb-2">Inhibition Efficiency Score</h3>
-              <p className="text-5xl font-extrabold text-white">{scores.composite.score}</p>
-              <p className="text-2xl mt-2 text-gray-300">
-                Rating: <span className="font-extrabold text-[#02c082]">{scores.composite.descriptor}</span>
-              </p>
+        <div className="text-center space-y-6">
+            <h2 className="text-2xl font-bold mb-4">Flanker Task</h2>
+            <p className="text-lg">Trial {trial + 1} of {totalTrials}</p>
+            <p className="text-gray-300">Identify the direction of the <span className="font-bold">middle arrow</span> using the LEFT and RIGHT arrow keys.</p>
+            <div className="flex items-center justify-center h-48">
+                <p className="text-6xl font-black">
+                    {currentStimulus?.arrows}
+                </p>
             </div>
+        </div>
+    );
+};
+
+// Helper function to save results to the backend
+const saveResults = async (player, taskType, results, overallScore, descriptor) => {
+    // Use relative URL to avoid CORS issues
+    const API_URL = '/cognative-games/OGgames/backend/saveGame9Results.php';
+    
+    const requestData = {
+        player: {
+            nickname: player.nickname || 'Anonymous',
+            avatar: player.avatar || 'default'
+        },
+        taskType,
+        results,
+        overallScore,
+        descriptor,
+        timestamp: new Date().toISOString()
+    };
+
+    console.log(`[${new Date().toISOString()}] Saving ${taskType} results:`, {
+        ...requestData,
+        player: { ...requestData.player, avatar: '...' } // Don't log full avatar data
+    });
+    
+    try {
+        const startTime = performance.now();
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(requestData),
+            credentials: 'same-origin' // Use same-origin instead of include for better security
+        });
+        
+        const responseTime = performance.now() - startTime;
+        console.log(`[${new Date().toISOString()}] Response received in ${responseTime.toFixed(0)}ms:`, {
+            status: response.status,
+            statusText: response.statusText,
+            url: response.url,
+            type: response.type
+        });
+        
+        const responseText = await response.text();
+        console.log('Raw response text:', responseText);
+        
+        if (!response.ok) {
+            console.error('Server response error details:', {
+                status: response.status,
+                headers: Object.fromEntries(response.headers.entries()),
+                body: responseText
+            });
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        let data;
+        try {
+            data = responseText ? JSON.parse(responseText) : {};
+        } catch (e) {
+            console.error('Failed to parse JSON response. Response was:', responseText);
+            throw new Error('Invalid JSON response from server');
+        }
+        
+        console.log(`[${new Date().toISOString()}] Save successful:`, data);
+        return data;
+    } catch (error) {
+        const errorInfo = {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+            request: {
+                url: 'http://localhost/cognative-games/OGgames/backend/saveGame9Results.php',
+                method: 'POST',
+                data: {
+                    ...requestData,
+                    results: { ...requestData.results, /* Don't log all results data */ },
+                    player: { ...requestData.player, avatar: '...' }
+                }
+            },
+            timestamp: new Date().toISOString()
+        };
+        
+        console.error(`[${errorInfo.timestamp}] Error saving results:`, errorInfo);
+        throw error; // Re-throw to allow error handling in the calling component
+    }
+};
+
+// Helper function to calculate composite score
+const calculateCompositeScore = (results) => {
+    if (!results || !results.task) return 0;
+    
+    try {
+        console.log('Calculating composite score for:', results.task);
+        console.log('Results data:', JSON.parse(JSON.stringify(results)));
+        
+        const allScores = [];
+        
+        // For Go/No-Go task
+        if (results.task === 'Go/No-Go') {
+            const score = Number(results.subscore) || 0;
+            console.log('Go/No-Go subscore:', score);
+            allScores.push(score);
+        }
+        
+        // For Stroop and Flanker tasks
+        if (results.task === 'Stroop' || results.task === 'Flanker') {
+            const subscoreC = Number(results.subscoreC) || 0;
+            const subscoreI = Number(results.subscoreI) || 0;
+            const avgScore = (subscoreC + subscoreI) / 2;
+            console.log(`${results.task} subscores - C: ${subscoreC}, I: ${subscoreI}, Avg: ${avgScore}`);
+            allScores.push(avgScore);
+        }
+        
+        // Calculate average score if we have any scores
+        if (allScores.length > 0) {
+            const totalScore = allScores.reduce((sum, score) => sum + score, 0);
+            const avgScore = totalScore / allScores.length;
+            console.log('Final composite score:', avgScore);
+            return avgScore;
+        }
+        
+        console.warn('No valid scores found for composite calculation');
+        return 0;
+    } catch (error) {
+        console.error('Error calculating composite score:', error);
+        return 0;
+    }
+};
+
+// Results View Component
+const ResultsView = ({ results, setView }) => {
+    // State hooks at the top level
+    const [isLoading, setIsLoading] = useState(true);
+    const [saveStatus, setSaveStatus] = useState({
+        isSaving: false,
+        isSaved: false,
+        error: null
+    });
+    
+    // Calculate derived values
+    const compositeScore = results ? calculateCompositeScore(results) : 0;
+    const descriptor = getDescriptor(compositeScore);
+    
+    // Get player info
+    const player = {
+        nickname: localStorage.getItem('playerNickname') || 'Anonymous',
+        avatar: localStorage.getItem('playerAvatar') || 'default'
+    };
+    
+    // Effect for handling results loading and saving
+    useEffect(() => {
+        const saveResultsToBackend = async () => {
+            if (!results) {
+                console.warn('No results data available');
+                setIsLoading(false);
+                return;
+            }
             
-            <table className="min-w-full bg-slate-800 rounded-xl shadow-lg mb-8 text-left border border-slate-700">
-              <thead>
-                <tr className="bg-slate-700 text-white">
-                  <th className="py-3 px-4">Task</th>
-                  <th className="py-3 px-4">C/Go Accuracy</th>
-                  <th className="py-3 px-4">I/No-Go Accuracy</th>
-                  <th className="py-3 px-4">C/Go RT</th>
-                  <th className="py-3 px-4">I/No-Go RT</th>
-                  <th className="py-3 px-4">Subscores</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-gray-700 text-gray-300 hover:bg-slate-700">
-                  <td className="py-3 px-4 font-bold">Go/No-Go</td>
-                  <td className="py-3 px-4">{scores.goNoGo.goAccuracy.toFixed(2)}%</td>
-                  <td className="py-3 px-4">{scores.goNoGo.noGoAccuracy.toFixed(2)}%</td>
-                  <td className="py-3 px-4">{scores.goNoGo.goRTAverage.toFixed(0)}ms</td>
-                  <td className="py-3 px-4">-</td>
-                  <td className="py-3 px-4">Go Acc: {scores.goNoGo.goAccuracyLikert} | No-Go Acc: {scores.goNoGo.noGoAccuracyLikert} | Go RT: {scores.goNoGo.goRTLikert}</td>
-                </tr>
-                <tr className="border-b border-gray-700 text-gray-300 hover:bg-slate-700">
-                  <td className="py-3 px-4 font-bold">Stroop</td>
-                  <td className="py-3 px-4">{scores.stroop.stroopCAcc.toFixed(2)}%</td>
-                  <td className="py-3 px-4">{scores.stroop.stroopIAcc.toFixed(2)}%</td>
-                  <td className="py-3 px-4">{scores.stroop.stroopC_RT_Avg.toFixed(0)}ms</td>
-                  <td className="py-3 px-4">{scores.stroop.stroopI_RT_Avg.toFixed(0)}ms</td>
-                  <td className="py-3 px-4">C Acc: {scores.stroop.stroopCAccLikert} | I Acc: {scores.stroop.stroopIAccLikert} | C RT: {scores.stroop.stroopC_RT_Likert} | I RT: {scores.stroop.stroopI_RT_Likert}</td>
-                </tr>
-                <tr className="hover:bg-slate-700 text-gray-300">
-                  <td className="py-3 px-4 font-bold">Flanker</td>
-                  <td className="py-3 px-4">{scores.flanker.flankerCAcc.toFixed(2)}%</td>
-                  <td className="py-3 px-4">{scores.flanker.flankerIAcc.toFixed(2)}%</td>
-                  <td className="py-3 px-4">{scores.flanker.flankerC_RT_Avg.toFixed(0)}ms</td>
-                  <td className="py-3 px-4">{scores.flanker.flankerI_RT_Avg.toFixed(0)}ms</td>
-                  <td className="py-3 px-4">C Acc: {scores.flanker.flankerCAccLikert} | I Acc: {scores.flanker.flankerIAccLikert} | C RT: {scores.flanker.flankerC_RT_Likert} | I RT: {scores.flanker.flankerI_RT_Likert}</td>
-                </tr>
-              </tbody>
-            </table>
+            console.log('ResultsView received results:', JSON.parse(JSON.stringify(results)));
             
-            <div className="bg-slate-800 p-6 rounded-2xl shadow-lg mt-8 text-left w-full border border-slate-700">
-              <h3 className="text-2xl font-bold text-[#02c082] mb-2">Interference / Conflict Index</h3>
-              <p className="text-gray-300 mb-2">
-                <span className="font-semibold">Stroop:</span> Accuracy Cost: {scores.stroop.accuracyCost}% | RT Cost: {scores.stroop.rtCost}ms
-              </p>
-              <p className="text-gray-300">
-                <span className="font-semibold">Flanker:</span> Accuracy Cost: {scores.flanker.accuracyCost}% | RT Cost: {scores.flanker.rtCost}ms
-              </p>
+            // Skip if we've already saved results for this task
+            if (saveStatus.isSaved) {
+                setIsLoading(false);
+                return;
+            }
+            
+            setSaveStatus(prev => ({ ...prev, isSaving: true }));
+            
+            let taskData = null;
+            let taskType = '';
+            let overallScore = 0;
+
+            try {
+                if (results.task === 'Go/No-Go') {
+                    taskType = 'goNoGo';
+                    overallScore = results.subscore || 0;
+                    taskData = {
+                        goAccuracy: results.goAccuracy,
+                        noGoAccuracy: results.noGoAccuracy,
+                        commissionErrors: results.commissionErrors,
+                        omissionErrors: results.omissionErrors,
+                        avgGoRT: results.avgGoRT,
+                        subscore: results.subscore
+                    };
+                } else if (results.task === 'Stroop' || results.task === 'Flanker') {
+                    taskType = results.task.toLowerCase();
+                    overallScore = (results.subscoreC + results.subscoreI) / 2;
+                    taskData = {
+                        congruentAccuracy: results.correctC,
+                        incongruentAccuracy: results.correctI,
+                        avgCongruentRT: results.avgCRT,
+                        avgIncongruentRT: results.avgIRT,
+                        accuracyCost: results.accuracyCost,
+                        rtCost: results.rtCost,
+                        congruentSubscore: results.subscoreC,
+                        incongruentSubscore: results.subscoreI
+                    };
+                }
+
+                if (taskData && taskType) {
+                    console.log('Saving results to backend:', { taskType, taskData, overallScore });
+                    await saveResults(
+                        player, 
+                        taskType, 
+                        taskData, 
+                        overallScore, 
+                        getDescriptor(overallScore)
+                    );
+                    console.log('Results saved successfully');
+                    setSaveStatus({
+                        isSaving: false,
+                        isSaved: true,
+                        error: null
+                    });
+                }
+            } catch (error) {
+                console.error('Error saving results:', error);
+                setSaveStatus({
+                    isSaving: false,
+                    isSaved: false,
+                    error: error.message || 'Failed to save results. Please try again.'
+                });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        saveResultsToBackend();
+    }, [results]);
+    
+    // Loading state
+    if (isLoading || !results || Object.keys(results).length === 0) {
+        return (
+            <div className="text-center p-6">
+                <h2 className="text-2xl font-bold mb-4">Loading Results...</h2>
+                <p className="text-gray-300">Please wait while we process your results.</p>
+                {saveStatus.isSaving && (
+                    <div className="mt-4">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                        <p className="mt-2 text-blue-400">Saving your results...</p>
+                    </div>
+                )}
+            </div>
+        );
+    }
+    
+    // Error state
+    if (saveStatus.error) {
+        return (
+            <div className="text-center p-6">
+                <div className="bg-red-900/50 border border-red-700 rounded-lg p-4 mb-4">
+                    <h2 className="text-xl font-bold text-red-400 mb-2">Error Saving Results</h2>
+                    <p className="text-red-300">{saveStatus.error}</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="mt-4 bg-red-700 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
+                    >
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // Calculate results data based on task type
+    const getTaskResults = () => {
+        if (!results || !results.task) return null;
+
+        let taskData = null;
+        let taskType = '';
+        let overallScore = 0;
+        let displayData = [];
+
+        if (results.task === 'Go/No-Go') {
+            taskType = 'goNoGo';
+            overallScore = results.subscore || 0;
+            taskData = {
+                goAccuracy: results.goAccuracy,
+                noGoAccuracy: results.noGoAccuracy,
+                commissionErrors: results.commissionErrors,
+                omissionErrors: results.omissionErrors,
+                avgGoRT: results.avgGoRT,
+                subscore: results.subscore
+            };
+            
+            displayData = [
+                { label: 'Go Accuracy', value: `${results.goAccuracy?.toFixed(1) || 0}%` },
+                { label: 'No-Go Accuracy', value: `${results.noGoAccuracy?.toFixed(1) || 0}%` },
+                { label: 'Commission Errors', value: results.commissionErrors || 0 },
+                { label: 'Omission Errors', value: results.omissionErrors || 0 },
+                { label: 'Avg Go RT', value: `${results.avgGoRT?.toFixed(0) || 0}ms` }
+            ];
+        } 
+        else if (results.task === 'Stroop' || results.task === 'Flanker') {
+            taskType = results.task.toLowerCase();
+            overallScore = (results.subscoreC + results.subscoreI) / 2;
+            taskData = {
+                congruentAccuracy: results.correctC,
+                incongruentAccuracy: results.correctI,
+                avgCongruentRT: results.avgCRT,
+                avgIncongruentRT: results.avgIRT,
+                accuracyCost: results.accuracyCost,
+                rtCost: results.rtCost,
+                congruentSubscore: results.subscoreC,
+                incongruentSubscore: results.subscoreI
+            };
+            
+            displayData = [
+                { label: 'Congruent Accuracy', value: `${results.correctC?.toFixed(1) || 0}%` },
+                { label: 'Incongruent Accuracy', value: `${results.correctI?.toFixed(1) || 0}%` },
+                { label: 'Avg Congruent RT', value: `${results.avgCRT?.toFixed(0) || 0}ms` },
+                { label: 'Avg Incongruent RT', value: `${results.avgIRT?.toFixed(0) || 0}ms` },
+                { label: 'Accuracy Cost', value: results.accuracyCost?.toFixed(1) || 0 },
+                { label: 'RT Cost', value: `${results.rtCost?.toFixed(0) || 0}ms` }
+            ];
+        }
+
+        return { taskType, taskData, overallScore, displayData };
+    };
+
+    // Get task results
+    const taskResults = getTaskResults();
+
+    // Helper function to safely format numbers
+    const formatNumber = (value, decimals = 1) => {
+        if (value === undefined || value === null) return 'N/A';
+        const num = Number(value);
+        return isNaN(num) ? 'N/A' : num.toFixed(decimals);
+    };
+
+    // If no valid task results, show error
+    if (!taskResults) {
+        return (
+            <div className="text-center p-6">
+                <h2 className="text-2xl font-bold text-red-500 mb-4">Error</h2>
+                <p className="text-gray-300">No valid results data available. Please try again.</p>
+                <button 
+                    onClick={() => setView('mainMenu')}
+                    className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                >
+                    Back to Menu
+                </button>
+            </div>
+        );
+    }
+
+    const { taskType, taskData, overallScore, displayData } = taskResults;
+    const taskDescriptor = getDescriptor(overallScore);
+
+    console.log('Rendering results view with data:', {
+        task: results.task,
+        results: JSON.parse(JSON.stringify(results)),
+        overallScore,
+        taskDescriptor
+    });
+
+    return (
+        <div className="text-center space-y-6 p-6">
+            <h2 className="text-2xl font-bold">Task Complete!</h2>
+            <p className="text-gray-300">Here are your results for the {results.task || 'unknown'} task.</p>
+            <div className="bg-gray-800 rounded-lg p-4 max-w-md mx-auto">
+                <p className="text-xl font-semibold mb-2">
+                    Overall Score: {formatNumber(overallScore, 1)}/5.0
+                </p>
+                <p className="text-lg text-blue-400 mb-4">
+                    Performance: {taskDescriptor}
+                </p>
+                
+                <div className="mt-4 space-y-2 text-left">
+                    {displayData.map((item, index) => (
+                        <div key={index} className="flex justify-between">
+                            <span className="text-gray-400">{item.label}:</span>
+                            <span className="font-medium">{item.value}</span>
+                        </div>
+                    ))}
+                </div>
             </div>
 
-            <button
-              onClick={() => {
-                setTaskData({ goNoGo: { goResponses: [], noGoResponses: [] }, stroop: { congruent: [], incongruent: [] }, flanker: { congruent: [], incongruent: [] } });
-                setGameState('start');
-              }}
-              className="mt-8 px-8 py-4 bg-[#02c082] text-slate-900 font-bold text-xl rounded-full shadow-lg hover:bg-[#03a06c] transition-all duration-300 transform hover:scale-105 active:scale-95"
-            >
-              Retake Assessment
-            </button>
-          </div>
-        )}
-      </div>
+            <div className="mt-6">
+                <button
+                    onClick={() => setView('mainMenu')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-colors text-lg"
+                >
+                    Back to Main Menu
+                </button>
+            </div>
+        </div>
     );
-  };
-  
-  return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-[#1a2430] font-inter">
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
-        .font-inter {
-          font-family: 'Inter', sans-serif;
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
-      {gameState === 'start' && <StartScreen />}
-      {gameState === 'goNoGo' && <GoNoGoTask />}
-      {gameState === 'stroop' && <StroopTask />}
-      {gameState === 'flanker' && <FlankerTask />}
-      {gameState === 'results' && <ResultsScreen />}
-    </div>
-  );
 };
 
 export default App;

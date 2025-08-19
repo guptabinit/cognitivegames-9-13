@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react';
-
-// Lucide-react icons for UI elements
 import { Award, Clock, Lightbulb, Check, X, Users, Smile, Frown } from 'lucide-react';
 
-// This is the main component for our delayed gratification game.
-// It handles all the game logic, state management, and UI rendering.
 const App = () => {
   // Define all the state variables to manage the game flow.
   const [gamePhase, setGamePhase] = useState('intro'); // 'intro', 'choice', 'waiting', 'reasoning', 'matrix', 'results'
@@ -85,13 +81,58 @@ const App = () => {
     }
   }, [gamePhase, chosenReward, ageGroup, gameParams]);
 
+  // State for countdown before game starts
+  const [countdown, setCountdown] = useState(5); // 5 seconds countdown
+  const [countdownActive, setCountdownActive] = useState(false);
+
+  // Effect for the countdown timer
+  useEffect(() => {
+    if (countdownActive && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (countdown === 0 && countdownActive) {
+      setCountdownActive(false);
+      setGamePhase('waiting');
+      setCountdown(5); // Reset countdown for next time
+    }
+  }, [countdown, countdownActive]);
+
   // Function to handle the choice of a reward.
   const handleChoice = (rewardType) => {
     setChosenReward(rewardType);
     if (rewardType === 'small') {
       setGamePhase('reasoning');
     } else {
-      setGamePhase('waiting');
+      setCountdownActive(true); // Start the countdown
+    }
+  };
+
+  // Function to save results to the backend
+  const saveResults = async (finalScore, finalInterpretation) => {
+    try {
+      const response = await fetch('http://localhost/cognative-games/OGgames/backend/saveGame10Results.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          player_name: 'Player', // You might want to get this from user input or context
+          age_group: ageGroup,
+          chosen_reward: chosenReward,
+          waited_for: waitedFor,
+          reasoning: reasoning,
+          matrix_answers: matrixAnswers,
+          score: finalScore,
+          interpretation: finalInterpretation
+        }),
+      });
+      
+      const result = await response.json();
+      if (result.status !== 'success') {
+        console.error('Failed to save results:', result.message);
+      }
+    } catch (error) {
+      console.error('Error saving results:', error);
     }
   };
 
@@ -135,21 +176,27 @@ const App = () => {
     });
     rawScore += matrixPoints;
     
-    setScore(rawScore);
-
-    // Convert raw score to Likert scale and interpretation.
+    // Calculate interpretation
+    let finalInterpretation = '';
     if (rawScore >= 4) {
-      setInterpretation('Excellent self-control');
+      finalInterpretation = 'Excellent self-control';
     } else if (rawScore >= 3) {
-      setInterpretation('Above Average');
+      finalInterpretation = 'Above Average';
     } else if (rawScore >= 2) {
-      setInterpretation('Average');
+      finalInterpretation = 'Average';
     } else if (rawScore >= 1) {
-      setInterpretation('Below Average');
+      finalInterpretation = 'Below Average';
     } else {
-      setInterpretation('Very limited delay ability');
+      finalInterpretation = 'Very limited delay ability';
     }
-
+    
+    setScore(rawScore);
+    setInterpretation(finalInterpretation);
+    
+    // Save results to backend
+    saveResults(rawScore, finalInterpretation);
+    
+    // Show results
     setGamePhase('results');
   };
 
@@ -218,8 +265,24 @@ const App = () => {
           </div>
         )}
 
+        {/* Phase: Countdown before waiting */}
+        {countdownActive && (
+          <div className="flex flex-col items-center">
+            <h2 className="text-3xl font-bold mb-4">Get Ready!</h2>
+            <p className="text-lg text-slate-200 mb-8">
+              The game will start in...
+            </p>
+            <div className="relative w-48 h-48 flex items-center justify-center mb-8">
+              <Clock className="w-full h-full text-blue-500 opacity-20" />
+              <div className="absolute text-6xl font-extrabold text-blue-400">
+                {countdown}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Phase: Waiting - Timer */}
-        {gamePhase === 'waiting' && (
+        {gamePhase === 'waiting' && !countdownActive && (
           <div className="flex flex-col items-center">
             <h2 className="text-3xl font-bold mb-4">The timer has started...</h2>
             <p className="text-sm text-slate-300 mb-6">
@@ -228,11 +291,11 @@ const App = () => {
             <div className="relative w-48 h-48 flex items-center justify-center mb-8">
               <Clock className="w-full h-full text-blue-500 opacity-20" />
               <div className="absolute text-5xl font-extrabold text-blue-400">
-                {gameParams[ageGroup].wait - waitedFor}
+                {Math.floor((gameParams[ageGroup].wait - waitedFor) / 60)}:{(gameParams[ageGroup].wait - waitedFor) % 60 < 10 ? '0' : ''}{(gameParams[ageGroup].wait - waitedFor) % 60}
               </div>
             </div>
             <p className="text-lg font-semibold text-slate-100 mb-4">
-              Time Waited: {waitedFor} seconds
+              Time Waited: {Math.floor(waitedFor / 60)}:{(waitedFor % 60).toString().padStart(2, '0')}
             </p>
             <Button onClick={() => { clearInterval(timerId); setGamePhase('reasoning'); }} color="gray">
               <X />

@@ -716,7 +716,6 @@ const App = () => {
                             </div>
                         </div>
                     )}
-
                     <div className="p-4 bg-purple-200 rounded-lg flex items-center justify-between mt-6">
                         <div className="flex items-center gap-4">
                             <RefreshCcw size={24} className="text-purple-800" />
