@@ -1,3 +1,7 @@
+-- ===========================================
+-- Core Database Tables
+-- ===========================================
+
 -- Create the database if it doesn't exist
 CREATE DATABASE IF NOT EXISTS cognitive_game;
 
@@ -34,8 +38,6 @@ CREATE TABLE IF NOT EXISTS game_rounds (
     user_answer VARCHAR(50) NOT NULL,
     is_correct BOOLEAN NOT NULL,
     time_taken FLOAT NOT NULL,
-
-    
     choice_changes INT NOT NULL DEFAULT 0,
     error_type ENUM('close_meaning', 'random') NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -63,6 +65,10 @@ CREATE TABLE IF NOT EXISTS game_results (
 CREATE INDEX idx_sessions_player ON game_sessions(player_id);
 CREATE INDEX idx_rounds_session ON game_rounds(session_id);
 CREATE INDEX idx_results_session ON game_results(session_id);
+
+-- ===========================================
+-- Game 3: Memory Span (Forward/Backward Span)
+-- ===========================================
 
 -- Game3 Forward Span table
 CREATE TABLE IF NOT EXISTS game3_fwdspan (
@@ -118,7 +124,10 @@ CREATE TABLE IF NOT EXISTS game3_memrating (
     INDEX idx_memrating_player (player_id)
 );
 
-<<<<<<< HEAD
+-- ===========================================
+-- Game 4: Listening Recall
+-- ===========================================
+
 -- Game4 Listening Recall tables
 CREATE TABLE IF NOT EXISTS game4_stories (
     story_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -166,6 +175,43 @@ CREATE TABLE IF NOT EXISTS game4_results (
     INDEX idx_g4results_player (player_id),
     INDEX idx_g4results_story (story_id)
 );
+
+-- ===========================================
+-- Game 5: Emotion Recognition
+-- ===========================================
+
+-- Game5 Emotion Recognition table
+CREATE TABLE IF NOT EXISTS game5_emotion_responses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_id INT NOT NULL,
+    question_id INT NOT NULL,
+    correct_emotion VARCHAR(20) NOT NULL,
+    selected_emotion VARCHAR(20) NOT NULL,
+    is_correct BOOLEAN NOT NULL,
+    response_time_ms INT NOT NULL,
+    intensity VARCHAR(10) NOT NULL,
+    age_group VARCHAR(10) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
+    INDEX idx_emotion_player (player_id)
+);
+
+-- Game5 Results table
+CREATE TABLE IF NOT EXISTS game5_results (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_id INT NOT NULL,
+    total_questions INT NOT NULL,
+    correct_answers INT NOT NULL,
+    accuracy FLOAT NOT NULL,
+    avg_response_time FLOAT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
+    INDEX idx_game5results_player (player_id)
+);
+
+-- ===========================================
+-- Game 6: Social Cognition
+-- ===========================================
 
 -- Game6 Social Cognition tables
 CREATE TABLE IF NOT EXISTS game6_stories (
@@ -234,9 +280,103 @@ CREATE TABLE IF NOT EXISTS game6_answers (
     FOREIGN KEY (story_id) REFERENCES game6_stories(story_id) ON DELETE CASCADE,
     INDEX idx_g6answers_result (result_id),
     INDEX idx_g6answers_story (story_id)
-=======
--- Game5 Emotion Recognition table
-CREATE TABLE IF NOT EXISTS game5_emotion_responses (
+);
+
+-- ===========================================
+-- Game 8: Social and Emotional Context Challenge
+-- ===========================================
+
+CREATE TABLE IF NOT EXISTS game8_results (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_id INT NOT NULL,
+    perspective_score INT NOT NULL,
+    perspective_rating VARCHAR(20) NOT NULL,
+    social_factor_score INT NOT NULL,
+    social_factor_rating VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
+    INDEX idx_game8_player (player_id)
+);
+
+-- ===========================================
+-- Game 9: Cognitive Assessment
+-- ===========================================
+
+CREATE TABLE IF NOT EXISTS game9_go_nogo (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_id INT NOT NULL,
+    go_accuracy FLOAT NOT NULL,
+    nogo_accuracy FLOAT NOT NULL,
+    commission_errors INT NOT NULL,
+    omission_errors INT NOT NULL,
+    avg_go_rt FLOAT NOT NULL,
+    subscore INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
+    INDEX idx_go_nogo_player (player_id)
+);
+
+CREATE TABLE IF NOT EXISTS game9_stroop (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_id INT NOT NULL,
+    congruent_accuracy FLOAT NOT NULL,
+    incongruent_accuracy FLOAT NOT NULL,
+    avg_congruent_rt FLOAT NOT NULL,
+    avg_incongruent_rt FLOAT NOT NULL,
+    accuracy_cost FLOAT NOT NULL,
+    rt_cost FLOAT NOT NULL,
+    congruent_subscore INT NOT NULL,
+    incongruent_subscore INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
+    INDEX idx_stroop_player (player_id)
+);
+
+CREATE TABLE IF NOT EXISTS game9_flanker (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_id INT NOT NULL,
+    congruent_accuracy FLOAT NOT NULL,
+    incongruent_accuracy FLOAT NOT NULL,
+    avg_congruent_rt FLOAT NOT NULL,
+    avg_incongruent_rt FLOAT NOT NULL,
+    accuracy_cost FLOAT NOT NULL,
+    rt_cost FLOAT NOT NULL,
+    congruent_subscore INT NOT NULL,
+    incongruent_subscore INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
+    INDEX idx_flanker_player (player_id)
+);
+
+CREATE TABLE IF NOT EXISTS game9_results (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_id INT NOT NULL,
+    task_type ENUM('go_nogo', 'stroop', 'flanker') NOT NULL,
+    overall_score FLOAT NOT NULL,
+    descriptor VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
+    INDEX idx_game9_results_player (player_id, task_type)
+);
+
+-- ===========================================
+-- Game 10: Delayed Gratification Test
+-- ===========================================
+
+CREATE TABLE IF NOT EXISTS game10_results (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_id INT NOT NULL,
+    age_group VARCHAR(10) NOT NULL,
+    choice VARCHAR(20) NOT NULL,
+    wait_duration INT NOT NULL,
+    reasoning TEXT,
+    raw_score FLOAT NOT NULL,
+    likert_score INT NOT NULL,
+    interpretation VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
+    INDEX idx_game10_player (player_id)
+);
     id INT AUTO_INCREMENT PRIMARY KEY,
     player_id INT NOT NULL,
     question_id INT NOT NULL,
@@ -263,6 +403,65 @@ CREATE TABLE IF NOT EXISTS game5_results (
     FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
     INDEX idx_game5results_player (player_id)
 );
+-- Game9 Cognitive Assessment tables
+CREATE TABLE IF NOT EXISTS game9_go_nogo (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_id INT NOT NULL,
+    go_accuracy FLOAT NOT NULL,
+    nogo_accuracy FLOAT NOT NULL,
+    commission_errors INT NOT NULL,
+    omission_errors INT NOT NULL,
+    avg_go_rt FLOAT NOT NULL,
+    subscore INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
+    INDEX idx_go_nogo_player (player_id)
+);
+
+CREATE TABLE IF NOT EXISTS game9_stroop (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_id INT NOT NULL,
+    congruent_accuracy FLOAT NOT NULL,
+    incongruent_accuracy FLOAT NOT NULL,
+    avg_congruent_rt FLOAT NOT NULL,
+    avg_incongruent_rt FLOAT NOT NULL,
+    accuracy_cost FLOAT NOT NULL,
+    rt_cost FLOAT NOT NULL,
+    congruent_subscore INT NOT NULL,
+    incongruent_subscore INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
+    INDEX idx_stroop_player (player_id)
+);
+
+CREATE TABLE IF NOT EXISTS game9_flanker (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_id INT NOT NULL,
+    congruent_accuracy FLOAT NOT NULL,
+    incongruent_accuracy FLOAT NOT NULL,
+    avg_congruent_rt FLOAT NOT NULL,
+    avg_incongruent_rt FLOAT NOT NULL,
+    accuracy_cost FLOAT NOT NULL,
+    rt_cost FLOAT NOT NULL,
+    congruent_subscore INT NOT NULL,
+    incongruent_subscore INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
+    INDEX idx_flanker_player (player_id)
+);
+
+CREATE TABLE IF NOT EXISTS game9_results (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_id INT NOT NULL,
+    task_type ENUM('go_nogo', 'stroop', 'flanker') NOT NULL,
+    overall_score FLOAT NOT NULL,
+    descriptor VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
+    INDEX idx_game9_results_player (player_id, task_type)
+);
+
+
 
 -- Game6 Social and Emotional Context Challenge results table
 CREATE TABLE IF NOT EXISTS game8_results (
@@ -277,3 +476,22 @@ CREATE TABLE IF NOT EXISTS game8_results (
     INDEX idx_game8_player (player_id)
 >>>>>>> f87257c5bfeab351a7d460a652255fcdeadd872e
 );
+-- ...existing code...
+
+-- Game 10: Delayed Gratification Test Results
+CREATE TABLE IF NOT EXISTS game10_results (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_id INT NOT NULL,
+    age_group VARCHAR(10) NOT NULL,
+    choice VARCHAR(20) NOT NULL,
+    wait_duration INT NOT NULL,
+    reasoning TEXT,
+    raw_score FLOAT NOT NULL,
+    likert_score INT NOT NULL,
+    interpretation VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
+    INDEX idx_game10_player (player_id)
+);
+
+-- ...existing code...

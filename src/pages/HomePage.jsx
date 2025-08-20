@@ -136,8 +136,6 @@ export default function HomePage({ onStartGame }) {
               )}
             </div>
           )}
-
-
       <Footer />
       </div>
   );

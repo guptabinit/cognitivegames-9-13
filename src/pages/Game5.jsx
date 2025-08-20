@@ -716,7 +716,6 @@ const App = () => {
                             </div>
                         </div>
                     )}
-
                     <div className="p-4 bg-purple-200 rounded-lg flex items-center justify-between mt-6">
                         <div className="flex items-center gap-4">
                             <RefreshCcw size={24} className="text-purple-800" />
@@ -749,14 +748,15 @@ const App = () => {
   };
 
   const renderIntroScreen = () => (
-    <div className="flex flex-col items-center p-8 bg-white rounded-xl shadow-lg w-full max-w-xl text-center">
-      <h1 className="text-4xl font-extrabold text-gray-900 mb-4">Emotion Recognition Activity</h1>
-      <p className="text-lg text-gray-700 mb-6">
-        This game measures your ability to recognize emotions and your confidence in doing so. You will be shown 50 faces, one at a time.
+    <div className="flex flex-col items-center p-8 bg-gray-700 backdrop-blur-sm rounded-3xl shadow-xl w-full max-w-xl text-center animate-fade-in border border-slate-700">
+      <h1 className="text-4xl font-extrabold text-[#02c082] mb-4">Emotion Recognition Activity</h1>
+      <p className="text-lg text-gray-300 mb-6">
+        This game measures your ability to recognize emotions and your confidence in doing so.
+        You will be shown 50 faces, one at a time.
       </p>
-      <div className="w-full text-left bg-gray-100 p-4 rounded-lg mb-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-2">How It Works:</h3>
-        <ul className="list-disc list-inside space-y-1 text-gray-600">
+      <div className="w-full text-left bg-slate-700/50 p-4 rounded-lg mb-6 border border-slate-600">
+        <h3 className="text-xl font-bold text-[#02c082] mb-2">How It Works:</h3>
+        <ul className="list-disc list-inside space-y-1 text-gray-300">
           <li>For each of the 50 faces, select the emotion you see.</li>
           <li>Rate your confidence from 1 ("not sure at all") to 5 ("completely certain").</li>
           <li>Your accuracy, speed, and confidence calibration will be scored.</li>
@@ -764,12 +764,13 @@ const App = () => {
       </div>
       <button
         onClick={handleStartGame}
-        className="px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-xl shadow-lg transition-all duration-200"
+        className="px-8 py-4 bg-[#02c082] text-slate-900 font-bold rounded-full text-xl shadow-lg hover:bg-[#03a06c] transition-all duration-300 transform hover:scale-105 active:scale-95"
       >
         Start Activity
       </button>
     </div>
   );
+  
   
   const renderCalculatingScreen = () => {
     // Provide a default value if scoreData or finalRating is not available
@@ -790,7 +791,7 @@ const App = () => {
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; }
       `}</style>
-      <div className="w-full flex items-center justify-center">
+      <div className="w-full flex items-center justify-center ">
         {gameState === 'intro' && renderIntroScreen()}
         {gameState === 'playing' && renderGameScreen()}
         {gameState === 'calculating' && renderCalculatingScreen()}

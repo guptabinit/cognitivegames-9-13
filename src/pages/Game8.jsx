@@ -393,13 +393,13 @@ const Game8 = ({ player, onGoBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 md:p-8 flex items-center justify-center font-[Inter]">
-      <div className="w-full max-w-3xl">
+    <div className="min-h-screen bg-gray-700 p-4 md:p-8 flex items-center justify-center font-[Inter]">
+      <div className="w-full max-w-3xl bg-gray-900">
         <header className="text-center mb-8">
-          <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
+          <h1 className="text-4xl font-extrabold text-white mb-2">
             Social & Emotional Context Challenge
           </h1>
-          <p className="text-gray-600 text-lg">
+          <p className="text-white text-lg">
             A self-guided activity to practice understanding peer situations.
           </p>
         </header>

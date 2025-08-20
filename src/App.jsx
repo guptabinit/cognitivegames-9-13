@@ -3,13 +3,13 @@ import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from
 import HomePage from './pages/HomePage';
 import Game1 from './pages/Game1';
 import Game3 from './pages/Game3';
-<<<<<<< HEAD
 import Game4 from './pages/Game4';
-=======
 import Game5 from './pages/Game5';
 import Game5Results from './pages/Game5Results';
 import Game8 from './pages/Game8';
->>>>>>> f87257c5bfeab351a7d460a652255fcdeadd872e
+import Game7 from './pages/Game7';
+import Game9 from './pages/Game9'; // Import Game9
+import Game10 from './pages/Game10'; 
 import ArrowGame from './components/ArrowGame/ArrowGame';
 
 // Wrapper component to handle the game state and routing
@@ -34,11 +34,7 @@ function GameWrapper() {
 
   // Handle direct navigation to game routes
   useEffect(() => {
-<<<<<<< HEAD
-    const gameRoutes = ['/game1', '/game3', '/game4'];
-=======
-    const gameRoutes = ['/game1', '/game3', '/game5', '/game8'];
->>>>>>> f87257c5bfeab351a7d460a652255fcdeadd872e
+    const gameRoutes = ['/game1', '/game3', '/game5', '/game7', '/game8', '/game9','/game10']; // Added /game9 to the list
     if (gameRoutes.includes(location.pathname) && !isGameStarted) {
       // Set default player data for testing
       setPlayerData({ nickname: 'Test Player', avatar: { emoji: '👤', color: 'bg-blue-500' } });
@@ -61,10 +57,9 @@ function GameWrapper() {
         <Route path="/game3" element={
           <Game3 player={playerData} onGoBack={handleReturnHome} />
         } />
-<<<<<<< HEAD
         <Route path="/game4" element={
           <Game4 player={playerData} onGoBack={handleReturnHome} />
-=======
+        } />
         <Route path="/game5" element={
           <Game5 player={playerData} onGoBack={handleReturnHome} />
         } />
@@ -73,8 +68,14 @@ function GameWrapper() {
         } />
         <Route path="/game8" element={
           <Game8 player={playerData} onGoBack={handleReturnHome} />
->>>>>>> f87257c5bfeab351a7d460a652255fcdeadd872e
         } />
+        {/* Route for Game9 */}
+        <Route path="/game9" element={
+          <Game9 player={playerData} onGoBack={handleReturnHome} />
+        } />
+          <Route path="/game10" element={
+           <Game10 player={playerData} onGoBack={handleReturnHome} />
+         } />
       </Routes>
     </div>
   );
