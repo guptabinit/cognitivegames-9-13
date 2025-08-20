@@ -94,6 +94,27 @@ const App = () => {
   // Handle form submission for reasoning
   const handleReasoningSubmit = (e) => {
     e.preventDefault();
+    console.log('Form submitted');
+    console.log('Choice matrix answers:', choiceMatrixAnswers);
+    console.log('Reasoning text:', reasoning);
+    
+    // Validate that all questions are answered
+    const allQuestionsAnswered = configs[ageGroup].reasoningQuestions.every(
+      q => choiceMatrixAnswers[q.id] !== undefined
+    );
+    
+    if (!allQuestionsAnswered) {
+      console.error('Please answer all questions');
+      alert('Please answer all questions before submitting.');
+      return;
+    }
+    
+    if (!reasoning.trim()) {
+      console.error('Reasoning text is required');
+      alert('Please provide your reasoning before submitting.');
+      return;
+    }
+    
     calculateScore();
   };
 
@@ -141,6 +162,7 @@ const App = () => {
 
   // Calculate the final score based on the rubric
   const calculateScore = async () => {
+    console.log('Calculating score...');
     let rawScore = 0;
 
     // 1. Initial Choice (1 point for choosing to wait)
@@ -185,7 +207,8 @@ const App = () => {
       setScreen('results');
     } catch (error) {
       console.error('Failed to save results:', error);
-      // Optionally show an error message to the user
+      // Show error message to the user
+      alert('Failed to save results. Please try again.');
     }
   };
 
@@ -209,13 +232,13 @@ const App = () => {
             <div className="flex space-x-4">
               <button
                 onClick={() => startGame('10-11')}
-                className="bg-blue-500 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-blue-600 transition-all duration-300 transform hover:scale-105"
+                className="bg-blue-500 text-black font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-blue-600 transition-all duration-300 transform hover:scale-105"
               >
                 10-11 years
               </button>
               <button
                 onClick={() => startGame('12-13')}
-                className="bg-purple-500 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-purple-600 transition-all duration-300 transform hover:scale-105"
+                className="bg-purple-500 text-black font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-purple-600 transition-all duration-300 transform hover:scale-105"
               >
                 12-13 years
               </button>
@@ -227,23 +250,23 @@ const App = () => {
         const seconds = timer % 60;
         return (
           <div className="flex flex-col items-center justify-center p-8 text-center bg-white rounded-xl shadow-lg">
-            <h2 className="text-2xl font-bold mb-4 text-slate-800">Your Choice</h2>
+            <h2 className="text-2xl font-bold mb-4 text-gray-800">Your Choice</h2>
             <p className="text-lg text-slate-600 mb-2">You can have:</p>
             <div className="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-8 mb-8">
               <div className="flex flex-col items-center p-4 bg-gray-100 rounded-lg shadow-inner w-full md:w-auto">
-                <span className="text-4xl">{rewardType.smallReward}</span>
+                <span className="text-4xl text-black">{rewardType.smallReward}</span>
                 <p className="text-sm font-semibold text-slate-600 mt-2">now</p>
               </div>
               <p className="text-xl font-bold text-slate-800">OR</p>
               <div className="flex flex-col items-center p-4 bg-gray-100 rounded-lg shadow-inner w-full md:w-auto">
-                <span className="text-4xl">{rewardType.bigReward}</span>
+                <span className="text-4xl text-black">{rewardType.bigReward}</span>
                 <p className="text-sm font-semibold text-slate-600 mt-2">if you wait</p>
               </div>
             </div>
             <p className="text-xl font-bold mb-4 text-slate-800">Time Remaining: <span className="text-orange-500">{`${minutes}:${seconds < 10 ? '0' : ''}${seconds}`}</span></p>
             <button
               onClick={handleImmediateChoice}
-              className="bg-red-500 text-white font-semibold py-3 px-8 rounded-full shadow-lg hover:bg-red-600 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              className="bg-red-500 text-black font-semibold py-3 px-8 rounded-full shadow-lg hover:bg-red-600 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
             >
               Take the Small Reward Now
             </button>
@@ -258,7 +281,7 @@ const App = () => {
               <textarea
                 value={reasoning}
                 onChange={(e) => setReasoning(e.target.value)}
-                className="w-full h-32 p-4 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                className="w-full h-32 p-4 border border-black rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-black-500 transition-all text-black"
                 placeholder="Write your explanation here..."
                 required
               />
@@ -267,7 +290,7 @@ const App = () => {
                   <p className="font-medium text-slate-700 mb-2">{question.question}</p>
                   <div className="space-y-2">
                     {question.options.map((option) => (
-                      <label key={option} className="flex items-center space-x-2">
+                      <label key={option} className="flex items-center space-x-2 text-black">
                         <input
                           type="radio"
                           name={`question-${question.id}`}
@@ -278,7 +301,6 @@ const App = () => {
                             [question.id]: option
                           }))}
                           className="text-blue-500"
-                          required
                         />
                         <span>{option}</span>
                       </label>
@@ -288,7 +310,7 @@ const App = () => {
               ))}
               <button
                 type="submit"
-                className="w-full bg-blue-500 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-600 transition-colors"
+                className="w-full bg-blue-500 text-black font-semibold py-3 px-6 rounded-lg hover:bg-blue-600 transition-colors"
               >
                 Submit
               </button>
@@ -316,7 +338,7 @@ const App = () => {
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="mt-8 bg-blue-500 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-blue-600 transition-all duration-300"
+              className="mt-8 bg-blue-500 text-black font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-blue-600 transition-all duration-300"
             >
               Play Again
             </button>
@@ -328,8 +350,8 @@ const App = () => {
   };
 
   return (
-    <div className="font-sans min-h-screen flex items-center justify-center p-4 bg-slate-200">
-      <div className="bg-white rounded-xl p-8 shadow-2xl w-full max-w-2xl">
+    <div className="font-sans min-h-screen flex items-center justify-center p-4 bg-gray-700">
+      <div className="bg-gray-900 rounded-xl p-8 shadow-2xl w-full max-w-2xl">
         {renderScreen()}
       </div>
     </div>
