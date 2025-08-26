@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { ArrowRight } from 'lucide-react';
 
 // --- SCORING LOGIC ---
 
@@ -341,9 +342,15 @@ export default function Game3({ player, onGoBack }) {
                   <h3 className="text-2xl font-semibold text-white mb-2">Final Working Memory Rating</h3>
                   <p className="text-6xl font-bold text-white">{finalScores.finalRating} <span className="text-4xl text-gray-300">/ 5</span></p>
               </div>
-              <div className="flex justify-center space-x-4">
+              <div className="flex flex-wrap justify-center gap-4">
                 <button onClick={() => setGameState('instructions')} className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-lg font-semibold shadow-md">
                     Play Again
+                </button>
+                <button 
+                  onClick={() => window.location.href = '/game4'}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-lg font-semibold shadow-md flex items-center"
+                >
+                  Next: Listening Test <ArrowRight className="ml-2 h-5 w-5" />
                 </button>
               </div>
           </div>

@@ -185,7 +185,16 @@ export default function HomePage({ onStartGame }) {
                     className="flex items-center justify-center px-6 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-xl text-lg font-bold shadow-lg transition-all duration-200 transform hover:scale-105"
                   >
                     <Clock className="mr-2 h-5 w-5" />
-                    <span>Delayed Gratification</span>
+                    <span>Start Playing</span>
+                  </button>
+                  
+                  {/* Next Button */}
+                  <button
+                    onClick={() => window.location.href = '/game1'}
+                    className="flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-lg font-bold shadow-lg transition-all duration-200 transform hover:scale-105 mt-4 w-full max-w-sm"
+                  >
+                    <span>Next: Word Triads</span>
+                    <ArrowRight className="ml-2 h-5 w-5" />
                   </button>
                 </div>
               </div>

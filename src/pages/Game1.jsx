@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { ArrowRight } from 'lucide-react';
 
 // --- HELPER FUNCTION ---
 const shuffleArray = (array) => {
@@ -443,6 +444,12 @@ export default function Game1({ player, onGoBack }) {
               </button>
               <button onClick={() => setGameState('age_select')} className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-lg font-semibold shadow-md transition-all duration-300">
                 Play Again
+              </button>
+              <button 
+                onClick={() => window.location.href = '/game2'}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-lg font-semibold shadow-md transition-all duration-300 flex items-center"
+              >
+                Next: Arrow Game <ArrowRight className="ml-2 h-5 w-5" />
               </button>
             </div>
         </div>
