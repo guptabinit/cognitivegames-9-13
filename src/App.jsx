@@ -10,6 +10,7 @@ import Game8 from './pages/Game8';
 import Game7 from './pages/Game7';
 import Game9 from './pages/Game9'; // Import Game9
 import Game10 from './pages/Game10'; 
+import Game6 from './pages/Game6';
 import ArrowGame from './components/ArrowGame/ArrowGame';
 
 // Wrapper component to handle the game state and routing
@@ -69,13 +70,18 @@ function GameWrapper() {
         <Route path="/game8" element={
           <Game8 player={playerData} onGoBack={handleReturnHome} />
         } />
-        {/* Route for Game9 */}
+        <Route path="/game6" element={
+          <Game6 player={playerData} onGoBack={handleReturnHome} />
+        } />
+        <Route path="/game7" element={
+          <Game7 player={playerData} onGoBack={handleReturnHome} />
+        } />
         <Route path="/game9" element={
           <Game9 player={playerData} onGoBack={handleReturnHome} />
         } />
-          <Route path="/game10" element={
-           <Game10 player={playerData} onGoBack={handleReturnHome} />
-         } />
+        <Route path="/game10" element={
+          <Game10 player={playerData} onGoBack={handleReturnHome} />
+        } />
       </Routes>
     </div>
   );
