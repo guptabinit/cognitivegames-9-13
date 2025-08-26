@@ -12,6 +12,8 @@ import Game9 from './pages/Game9'; // Import Game9
 import Game10 from './pages/Game10'; 
 import Game6 from './pages/Game6';
 import ArrowGame from './components/ArrowGame/ArrowGame';
+// Import the App component from game11.jsx
+import Game11 from './pages/Game11';
 
 // Wrapper component to handle the game state and routing
 function GameWrapper() {
@@ -81,6 +83,12 @@ function GameWrapper() {
         } />
         <Route path="/game10" element={
           <Game10 player={playerData} onGoBack={handleReturnHome} />
+        } />
+        {/* Add route for Game11 */}
+        <Route path="/game11" element={
+          // Game11 is a self-contained app, so we render its App component directly.
+          // We pass a dummy onComplete function as it's not needed by the main App.
+          <Game11 onComplete={() => console.log('Game11 completed')} />
         } />
       </Routes>
     </div>
