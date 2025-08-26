@@ -257,10 +257,9 @@ export default function Game1({ player, onGoBack }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          player: {
-            nickname: player?.nickname || 'Guest',
-            avatar: player?.avatar?.emoji || '👤',
-          },
+          gameType: 'game1',
+          playerName: player?.nickname || 'Guest',
+          playerAvatar: player?.avatar?.emoji || '👤',
           ageGroup: playerAgeGroup,
           difficultyTier: difficultyTier,
           responses: responses.map(r => ({

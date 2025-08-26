@@ -26,7 +26,18 @@ if (!$data) {
 $conn->begin_transaction();
 
 try {
-    // 1. Insert or get player
+    // 1. First, ensure all required tables exist
+    $tables = ['game4_stories', 'game4_keydetails', 'game4_comprehension', 'game4_results'];
+    foreach ($tables as $table) {
+        $result = $conn->query("SHOW TABLES LIKE '$table'");
+        if ($result->num_rows == 0) {
+            // Initialize tables if they don't exist
+            require_once 'init_game4_tables.php';
+            break;
+        }
+    }
+
+    // 2. Insert or get player
     $nickname = $conn->real_escape_string($data['player']['nickname']);
     $avatar = $conn->real_escape_string($data['player']['avatar']);
     
@@ -47,15 +58,42 @@ try {
         $player_id = $conn->insert_id;
     }
 
-    // 2. Save story results
+    // 3. Ensure we have stories in the database
+    $stmt = $conn->query("SELECT COUNT(*) as count FROM game4_stories");
+    $storyCount = $stmt->fetch_assoc()['count'];
+    
+    if ($storyCount == 0) {
+        // If no stories exist, try to initialize them
+        require_once 'init_game4_tables.php';
+    }
+
+    // 4. Save story results if any
     if (!empty($data['storyResults'])) {
         $stmt = $conn->prepare("INSERT INTO game4_results 
             (player_id, story_id, recall_score, recall_percentage, 
              comprehension_score, comprehension_quality, processing_time, 
              speed_efficiency, final_rating)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+            recall_score = VALUES(recall_score),
+            recall_percentage = VALUES(recall_percentage),
+            comprehension_score = VALUES(comprehension_score),
+            comprehension_quality = VALUES(comprehension_quality),
+            processing_time = VALUES(processing_time),
+            speed_efficiency = VALUES(speed_efficiency),
+            final_rating = VALUES(final_rating)");
         
         foreach ($data['storyResults'] as $result) {
+            // Verify story exists
+            $checkStmt = $conn->prepare("SELECT story_id FROM game4_stories WHERE story_id = ?");
+            $checkStmt->bind_param("i", $result['storyId']);
+            $checkStmt->execute();
+            
+            if ($checkStmt->get_result()->num_rows === 0) {
+                error_log("Story ID " . $result['storyId'] . " not found, skipping");
+                continue; // Skip this result if story doesn't exist
+            }
+            
             $stmt->bind_param("iiidssdsd",
                 $player_id,
                 $result['storyId'],
@@ -67,65 +105,10 @@ try {
                 $result['speed']['efficiency'],
                 $result['finalRating']
             );
-            $stmt->execute();
-        }
-    }
-
-    // 3. Insert initial stories if they don't exist
-    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM game4_stories");
-    $stmt->execute();
-    $result = $stmt->get_result()->fetch_assoc();
-    
-    if ($result['count'] == 0) {
-        // Insert stories from the Game4.jsx file
-        $stories = [
-            // 9-10 Age Group
-            [
-                'age_group' => '9-10',
-                'level' => 1,
-                'text' => "The school library is getting new books next week. The librarian said there will be 15 new storybooks about animals and 10 new picture books. The books will be on the blue shelf near the window.",
-                'key_details' => [
-                    "15 new storybooks about animals",
-                    "10 new picture books",
-                    "Books will be on the blue shelf near the window",
-                    "Books arriving next week"
-                ],
-                'questions' => [
-                    [
-                        'question' => "Where will the new books be placed?",
-                        'options' => ["On the red shelf", "On the blue shelf near the window", "On the teacher's desk", "In the reading corner"],
-                        'answer' => "On the blue shelf near the window"
-                    ],
-                    [
-                        'question' => "How many new picture books are coming?",
-                        'options' => ["5", "10", "15", "20"],
-                        'answer' => "10"
-                    ]
-                ]
-            ],
-            // Add more stories here...
-        ];
-
-        foreach ($stories as $story) {
-            // Insert story
-            $stmt = $conn->prepare("INSERT INTO game4_stories (age_group, level, text) VALUES (?, ?, ?)");
-            $stmt->bind_param("sis", $story['age_group'], $story['level'], $story['text']);
-            $stmt->execute();
-            $story_id = $conn->insert_id;
-
-            // Insert key details
-            $detailStmt = $conn->prepare("INSERT INTO game4_keydetails (story_id, detail_text) VALUES (?, ?)");
-            foreach ($story['key_details'] as $detail) {
-                $detailStmt->bind_param("is", $story_id, $detail);
-                $detailStmt->execute();
-            }
-
-            // Insert comprehension questions
-            $qStmt = $conn->prepare("INSERT INTO game4_comprehension (story_id, question_text, options, correct_answer) VALUES (?, ?, ?, ?)");
-            foreach ($story['questions'] as $question) {
-                $optionsJson = json_encode($question['options']);
-                $qStmt->bind_param("isss", $story_id, $question['question'], $optionsJson, $question['answer']);
-                $qStmt->execute();
+            
+            if (!$stmt->execute()) {
+                error_log("Error saving story result: " . $stmt->error);
+                throw new Exception("Failed to save story result: " . $stmt->error);
             }
         }
     }
@@ -141,14 +124,19 @@ try {
     
 } catch (Exception $e) {
     // Rollback transaction on error
-    $conn->rollback();
+    if (isset($conn) && $conn) {
+        $conn->rollback();
+    }
     
     http_response_code(500);
     echo json_encode([
         'status' => 'error',
-        'message' => 'Failed to save results: ' . $e->getMessage()
+        'message' => 'Failed to save results: ' . $e->getMessage(),
+        'trace' => $e->getTraceAsString()
     ]);
 }
 
-$conn->close();
+if (isset($conn) && $conn) {
+    $conn->close();
+}
 ?>

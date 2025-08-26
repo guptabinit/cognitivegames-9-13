@@ -77,8 +77,8 @@ try {
     }
     
     // Handle other game types (existing code)
-    $nickname = $conn->real_escape_string($data['player']['nickname']);
-    $avatar = $conn->real_escape_string($data['player']['avatar'] ?? '');
+    $nickname = $conn->real_escape_string($data['playerName']);
+    $avatar = $conn->real_escape_string($data['playerAvatar'] ?? '👤');
     
     // Check if player exists
     $stmt = $conn->prepare("SELECT player_id FROM players WHERE nickname = ?");
@@ -107,7 +107,7 @@ try {
         $age_group = $conn->real_escape_string($data['ageGroup']);
         $difficulty_tier = $conn->real_escape_string($data['difficultyTier']);
         
-        $stmt = $conn->prepare("INSERT INTO game_sessions (player_id, age_group, difficulty_tier, game_type, end_time) VALUES (?, ?, ?, 'game1', NOW())");
+        $stmt = $conn->prepare("INSERT INTO game_sessions (player_id, age_group, difficulty_tier, end_time) VALUES (?, ?, ?, NOW())");
         $stmt->bind_param("iss", $player_id, $age_group, $difficulty_tier);
         $stmt->execute();
         $session_id = $conn->insert_id;
