@@ -199,7 +199,7 @@ const scoreShortAnswer = (answer, keywords) => {
 };
 
 // --- MAIN GAME COMPONENT ---
-export default function Game6({ player, onGoBack }) {
+export default function Game7({ player, onGoBack }) {
     const [gameState, setGameState] = useState('age_select'); // age_select, instructions, playing, results
     const [ageGroup, setAgeGroup] = useState(null);
     const [shuffledVignettes, setShuffledVignettes] = useState([]);
