@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import { PlayCircle, ChevronLeft, ChevronRight, User, Users, Brain, Headphones } from 'lucide-react';
+import { 
+  PlayCircle, ChevronLeft, ChevronRight, User, Users, Brain, Headphones, 
+  Heart, Activity, Eye, Smile, MessageSquare, Zap, Clock, ArrowRight, 
+  ArrowLeft, CheckCircle, XCircle, Volume2, VolumeX, ChevronUp, ChevronDown
+} from 'lucide-react';
 import Footer from '../components/Footer';
 import axios from 'axios';
 
@@ -83,50 +87,107 @@ export default function HomePage({ onStartGame }) {
                 placeholder="Enter your nickname"
               />
               <div className="flex flex-col space-y-4 w-full max-w-sm">
-                <button
-                  onClick={() => handleStartGame('/game1')}
-                  disabled={isLoading}
-                  className="flex items-center justify-center px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full text-xl font-bold shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? (
-                    'Loading...'
-                  ) : (
-                    <>
-                      <PlayCircle className="mr-2 h-6 w-6" />
-                      <span>Start Game 1</span>
-                    </>
-                  )}
-                </button>
-                
-                <button
-                  onClick={() => handleStartGame('/game3')}
-                  disabled={isLoading}
-                  className="flex items-center justify-center px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-full text-xl font-bold shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? (
-                    'Loading...'
-                  ) : (
-                    <>
-                      <Brain className="mr-2 h-6 w-6" />
-                      <span>Start Memory Test</span>
-                    </>
-                  )}
-                </button>
-                
-                <button
-                  onClick={() => handleStartGame('/game4')}
-                  disabled={isLoading}
-                  className="flex items-center justify-center px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full text-xl font-bold shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? (
-                    'Loading...'
-                  ) : (
-                    <>
-                      <Headphones className="mr-2 h-6 w-6" />
-                      <span>Start Listening Test</span>
-                    </>
-                  )}
-                </button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                  {/* Game 1: Triads */}
+                  <button
+                    onClick={() => handleStartGame('/game1')}
+                    disabled={isLoading}
+                    className="flex items-center justify-center px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-lg font-bold shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <MessageSquare className="mr-2 h-5 w-5" />
+                    <span>Word Triads</span>
+                  </button>
+                  
+                  {/* Game 2: Arrow Game */}
+                  <button
+                    onClick={() => handleStartGame('/game2')}
+                    disabled={isLoading}
+                    className="flex items-center justify-center px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-lg font-bold shadow-lg transition-all duration-200 transform hover:scale-105"
+                  >
+                    <ArrowRight className="mr-2 h-5 w-5" />
+                    <span>Arrow Game</span>
+                  </button>
+                  
+                  {/* Game 3: Memory Span */}
+                  <button
+                    onClick={() => handleStartGame('/game3')}
+                    disabled={isLoading}
+                    className="flex items-center justify-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-lg font-bold shadow-lg transition-all duration-200 transform hover:scale-105"
+                  >
+                    <Brain className="mr-2 h-5 w-5" />
+                    <span>Memory Test</span>
+                  </button>
+                  
+                  {/* Game 4: Listening Recall */}
+                  <button
+                    onClick={() => handleStartGame('/game4')}
+                    disabled={isLoading}
+                    className="flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-lg font-bold shadow-lg transition-all duration-200 transform hover:scale-105"
+                  >
+                    <Headphones className="mr-2 h-5 w-5" />
+                    <span>Listening Test</span>
+                  </button>
+                  
+                  {/* Game 5: Emotion Recognition */}
+                  <button
+                    onClick={() => handleStartGame('/game5')}
+                    disabled={isLoading}
+                    className="flex items-center justify-center px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white rounded-xl text-lg font-bold shadow-lg transition-all duration-200 transform hover:scale-105"
+                  >
+                    <Smile className="mr-2 h-5 w-5" />
+                    <span>Emotion Recognition</span>
+                  </button>
+                  
+                  {/* Game 6: Social Cognition */}
+                  <button
+                    onClick={() => handleStartGame('/game6')}
+                    disabled={isLoading}
+                    className="flex items-center justify-center px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-lg font-bold shadow-lg transition-all duration-200 transform hover:scale-105"
+                  >
+                    <Users className="mr-2 h-5 w-5" />
+                    <span>Social Cognition</span>
+                  </button>
+                  
+                  {/* Game 7: Emotional Understanding */}
+                  <button
+                    onClick={() => handleStartGame('/game7')}
+                    disabled={isLoading}
+                    className="flex items-center justify-center px-6 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-lg font-bold shadow-lg transition-all duration-200 transform hover:scale-105"
+                  >
+                    <Heart className="mr-2 h-5 w-5" />
+                    <span>Emotional Understanding</span>
+                  </button>
+                  
+                  {/* Game 8: Social & Emotional Context */}
+                  <button
+                    onClick={() => handleStartGame('/game8')}
+                    disabled={isLoading}
+                    className="flex items-center justify-center px-6 py-3 bg-violet-500 hover:bg-violet-600 text-white rounded-xl text-lg font-bold shadow-lg transition-all duration-200 transform hover:scale-105"
+                  >
+                    <Activity className="mr-2 h-5 w-5" />
+                    <span>Social Context</span>
+                  </button>
+                  
+                  {/* Game 9: Cognitive Assessment */}
+                  <button
+                    onClick={() => handleStartGame('/game9')}
+                    disabled={isLoading}
+                    className="flex items-center justify-center px-6 py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-lg font-bold shadow-lg transition-all duration-200 transform hover:scale-105"
+                  >
+                    <Activity className="mr-2 h-5 w-5" />
+                    <span>Cognitive Assessment</span>
+                  </button>
+                  
+                  {/* Game 10: Delayed Gratification */}
+                  <button
+                    onClick={() => handleStartGame('/game10')}
+                    disabled={isLoading}
+                    className="flex items-center justify-center px-6 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-xl text-lg font-bold shadow-lg transition-all duration-200 transform hover:scale-105"
+                  >
+                    <Clock className="mr-2 h-5 w-5" />
+                    <span>Delayed Gratification</span>
+                  </button>
+                </div>
               </div>
               
               {error && (
