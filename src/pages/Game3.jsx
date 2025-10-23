@@ -237,7 +237,7 @@ export default function Game3({ player, onGoBack }) {
       
       const gameData = {
         player: {
-          nickname: player.nickname,
+          nickname: 'Anonymous',
           avatar: player.avatar.name
         },
         forwardTrials: forwardTrials.map(trial => ({
@@ -380,7 +380,6 @@ export default function Game3({ player, onGoBack }) {
             <div className={`p-3 rounded-full ${player.avatar.color} text-2xl`}>
               {player.avatar.emoji}
             </div>
-            <span className="text-xl font-medium text-gray-200 hidden sm:block">{player.nickname}</span>
           </div>
         )}
         <h1 className="text-2xl sm:text-3xl font-bold text-emerald-400 flex-grow text-center">Memory Span Test</h1>

@@ -388,15 +388,14 @@ export default function Game7({ player, onGoBack }) {
 
     return (
         <div className="bg-gray-900 p-4 sm:p-8 rounded-3xl shadow-2xl w-full max-w-4xl mx-auto border border-gray-700">
-            <div className="flex justify-between items-center mb-6">
-                {player && (
-                    <div className="flex items-center space-x-3">
-                        <div className={`p-3 rounded-full ${player.avatar.color} text-2xl`}>
-                            {player.avatar.emoji}
-                        </div>
-                        <span className="text-xl font-medium text-gray-200 hidden sm:block">{player.nickname}</span>
-                    </div>
-                )}
+          <div className="flex justify-between items-center mb-6">
+              {player && (
+                  <div className="flex items-center space-x-3">
+                      <div className={`p-3 rounded-full ${player.avatar.color} text-2xl`}>
+                          {player.avatar.emoji}
+                      </div>
+                  </div>
+              )}
                 <h1 className="text-2xl sm:text-3xl font-bold text-emerald-400 flex-grow text-center">Emotional Understanding Test</h1>
                 <div className="w-24 sm:w-32"></div>
             </div>

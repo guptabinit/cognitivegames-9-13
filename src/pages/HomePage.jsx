@@ -11,7 +11,8 @@ export default function HomePage({ onStartGame }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedTab, setSelectedTab] = useState('anonymous');
-  const [nickname, setNickname] = useState('CoolNickname');
+  // Nickname concept removed from UI; keep a default value internally to maintain compatibility
+  const nickname = 'Player';
   const [currentAvatar, setCurrentAvatar] = useState(0);
 
   const avatars = [
@@ -30,18 +31,13 @@ export default function HomePage({ onStartGame }) {
   };
 
   const handleStartGame = async (gamePath) => {
-    if (!nickname.trim()) {
-      setError('Please enter a nickname');
-      return;
-    }
-
     setIsLoading(true);
     setError('');
 
     try {
       // Store user info in local storage for persistence
       const userData = {
-        nickname: nickname.trim(),
+        nickname: nickname,
         avatar: avatars[currentAvatar]
       };
       
@@ -61,7 +57,7 @@ export default function HomePage({ onStartGame }) {
     <div>
           {selectedTab === 'anonymous' && (
             <div className="flex flex-col items-center justify-center space-y-6">
-              <p className="text-gray-300 text-lg">CHOOSE A CHARACTER AND A NICKNAME</p>
+              <p className="text-gray-300 text-lg">CHOOSE A CHARACTER</p>
               <div className="flex items-center space-x-4">
                 <button
                   onClick={handlePrevAvatar}
@@ -79,13 +75,7 @@ export default function HomePage({ onStartGame }) {
                   <ChevronRight className="h-6 w-6 text-white" />
                 </button>
               </div>
-              <input
-                type="text"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-                className="bg-gray-700 text-white text-center text-lg rounded-full px-6 py-3 w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300"
-                placeholder="Enter your nickname"
-              />
+              {/* Nickname input removed */}
               <div className="flex flex-col space-y-4 w-full max-w-sm">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                   {/* Game 1: Triads */}
@@ -199,11 +189,7 @@ export default function HomePage({ onStartGame }) {
                 </div>
               </div>
               
-              {error && (
-                <div className="text-red-400 text-sm mt-2">
-                  {error}
-                </div>
-              )}
+              {/* Error display for nickname removed */}
             </div>
           )}
       <Footer />

@@ -556,7 +556,6 @@ export default function Game1({ player, onGoBack }) {
             <div className={`p-3 rounded-full ${player.avatar.color} text-2xl`}>
               {player.avatar.emoji}
             </div>
-            <span className="text-xl font-medium text-gray-200 hidden sm:block">{player.nickname}</span>
           </div>
         )}
         <h1 className="text-2xl sm:text-3xl font-bold text-emerald-400 flex-grow text-center">Verbal Reasoning</h1>
