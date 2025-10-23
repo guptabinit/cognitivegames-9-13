@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    { "source": "/game1", "destination": "/index.html" },
+    { "source": "/game2", "destination": "/index.html" },
+    { "source": "/game3", "destination": "/index.html" },
+    { "source": "/game4", "destination": "/index.html" },
+    { "source": "/game5", "destination": "/index.html" },
+    { "source": "/game6", "destination": "/index.html" },
+    { "source": "/game7", "destination": "/index.html" },
+    { "source": "/game8", "destination": "/index.html" },
+    { "source": "/game9", "destination": "/index.html" },
+    { "source": "/game10", "destination": "/index.html" },
+    { "source": "/game11", "destination": "/index.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
